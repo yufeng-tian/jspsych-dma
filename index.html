@@ -110,8 +110,11 @@
                       <p>Press the button below to enter fullscreen and begin.</p>`
         });
 
-        // 2. Preload all images from the CSV
-        const image_array = csv_data.map(row => row.stimulus);
+        // 2. Preload all images from the CSV (and filter out blank/ghost rows!)
+        const image_array = csv_data
+            .map(row => row.stimulus)
+            .filter(stimulus => stimulus !== null && stimulus !== undefined && stimulus !== "");
+
         timeline.push({
             type: jsPsychPreload,
             images: image_array,
