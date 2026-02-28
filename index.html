@@ -1,38 +1,49 @@
 <!DOCTYPE html>
 <html>
-  <head>
+
+<head>
     <title>VH Social Perception Study</title>
-    
+
     <script src="https://unpkg.com/jspsych@7.3.4"></script>
-    
+
     <script src="https://unpkg.com/@jspsych/plugin-html-keyboard-response"></script>
     <script src="https://unpkg.com/@jspsych/plugin-preload"></script>
     <script src="https://unpkg.com/@jspsych/plugin-fullscreen"></script>
-    
+
     <link href="https://unpkg.com/jspsych@7.3.4/css/jspsych.css" rel="stylesheet" type="text/css" />
-    
+
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
-    
+
     <script src="https://unpkg.com/@jspsych-builder/datapipe@0.1.0"></script>
 
     <style>
-      .feedback-text { font-size: 32px; font-weight: bold; margin-top: 20px; }
-      .stimulus-image { max-height: 500px; max-width: 500px; border-radius: 10px; }
+        .feedback-text {
+            font-size: 32px;
+            font-weight: bold;
+            margin-top: 20px;
+        }
+
+        .stimulus-image {
+            max-height: 500px;
+            max-width: 500px;
+            border-radius: 10px;
+        }
     </style>
-  </head>
-  <body></body>
-  <script>
-    
+</head>
+
+<body></body>
+<script>
+
     /* =========================================================
        BLOCK 1: INITIALIZATION & VARIABLES
        ========================================================= */
     const jsPsych = initJsPsych({
-        on_finish: function() {
+        on_finish: function () {
             // Save data to OSF via DataPipe when finished
             const experiment_id = "YOUR_DATAPIPE_ID_HERE"; // Update this later
             const filename = `subject_${subject_id}_${study_condition}_data.csv`;
             const data_to_save = jsPsych.data.get().csv();
-            
+
             jsPsychPipe.saveData(experiment_id, filename, data_to_save);
         }
     });
@@ -40,7 +51,7 @@
     // Capture URL Variables from Qualtrics
     const subject_id = jsPsych.data.getURLVariable('PROLIFIC_PID') || Math.floor(Math.random() * 10000).toString();
     const study_condition = jsPsych.data.getURLVariable('condition') || 'Human'; // 'Human' or 'AI'
-    
+
     // Counterbalance Response Keys (Even ID = F, Odd ID = J)
     const is_even = (parseInt(subject_id.replace(/\D/g, '')) || 0) % 2 === 0;
     const key_target = is_even ? 'f' : 'j';
@@ -59,23 +70,27 @@
     });
 
     /* =========================================================
-       BLOCK 2: FEEDBACK LOGIC
+       BLOCK 2: FEEDBACK LOGIC (Updated with Trim/Lowercase safeguard)
        ========================================================= */
     function calculateFeedback(is_target, response_key, intensity) {
+        // Clean up the intensity string just in case Excel added spaces
+        const clean_intensity = String(intensity).trim().toLowerCase();
+
+        // Check if correct
         let is_correct = false;
-        if ((is_target == 1 && response_key === key_target) || 
+        if ((is_target == 1 && response_key === key_target) ||
             (is_target == 0 && response_key === key_nontarget)) {
             is_correct = true;
         }
 
         let min, max;
         if (is_correct) {
-            if (intensity === 'clear') { min = 90; max = 98; }
-            else if (intensity === 'subtle') { min = 70; max = 80; }
+            if (clean_intensity === 'clear') { min = 90; max = 98; }
+            else if (clean_intensity === 'subtle') { min = 70; max = 80; }
             else { min = 55; max = 65; } // Neutral
-        } else { 
-            if (intensity === 'clear') { min = 2; max = 10; }
-            else if (intensity === 'subtle') { min = 20; max = 30; }
+        } else {
+            if (clean_intensity === 'clear') { min = 2; max = 10; }
+            else if (clean_intensity === 'subtle') { min = 20; max = 30; }
             else { min = 35; max = 45; } // Neutral
         }
 
@@ -84,15 +99,14 @@
     }
 
     /* =========================================================
-       BLOCK 3: CSV PARSER & TIMELINE BUILDER
+       BLOCK 3: CSV PARSER & TIMELINE BUILDER (Updated with Pauses)
        ========================================================= */
-    // Download and read the CSV file
     Papa.parse(list_path, {
         download: true,
         header: true,
         dynamicTyping: true,
         skipEmptyLines: true,
-        complete: function(results) {
+        complete: function (results) {
             buildAndRunExperiment(results.data);
         }
     });
@@ -100,7 +114,6 @@
     function buildAndRunExperiment(csv_data) {
         let timeline = [];
 
-        // 1. Fullscreen
         timeline.push({
             type: jsPsychFullscreen,
             fullscreen_mode: true,
@@ -110,7 +123,7 @@
                       <p>Press the button below to enter fullscreen and begin.</p>`
         });
 
-        // 2. Preload all images from the CSV (and filter out blank/ghost rows!)
+        // Preload images (filtering out blank rows)
         const image_array = csv_data
             .map(row => row.stimulus)
             .filter(stimulus => stimulus !== null && stimulus !== undefined && stimulus !== "");
@@ -122,75 +135,105 @@
             message: "Loading visual assets, please wait..."
         });
 
-        // 3. Loop through the 540 rows to build trials
+        // Variables to track where we are in the experiment
         let current_task = "";
+        let current_module = "";
+        let current_block = "";
 
+        // Loop through rows
         csv_data.forEach((row) => {
-            
-            // A. Detect if we started a new Task/Block and insert Instructions
+
+            // Skip totally blank rows
+            if (!row.stimulus) return;
+
+            // A. Module Break (Only show if module changes AND it's not the very first trial)
+            if (row.module_id !== current_module) {
+                if (current_module !== "") {
+                    timeline.push({
+                        type: jsPsychHtmlKeyboardResponse,
+                        stimulus: `<h2>${current_module} complete.</h2>
+                                   <p>Take a short break if needed. Please return within 2–3 minutes to ensure consistent task performance.</p>
+                                   <p>Press Enter to continue.</p>`,
+                        choices: ['Enter']
+                    });
+                }
+                current_module = row.module_id;
+            }
+
+            // B. Task Instructions
             if (row.task_id !== current_task) {
                 current_task = row.task_id;
-                
-                // We skip Module 2 (Task 3 & 4) if they are in the AI condition
+
+                // Skip T3/T4 for AI Condition
                 if (study_condition === 'AI' && (current_task === 'T3' || current_task === 'T4')) {
-                    return; // Skip adding these trials to timeline
+                    return;
                 }
 
                 timeline.push({
                     type: jsPsychHtmlKeyboardResponse,
                     stimulus: `<h2>Starting ${current_task}</h2>
                                <p>Target key: <strong>${key_target.toUpperCase()}</strong> | Non-target key: <strong>${key_nontarget.toUpperCase()}</strong></p>
-                               <p><em>(You can paste your detailed instructions here later)</em></p>
                                <p>Press SPACE to begin.</p>`,
                     choices: [' ']
                 });
             }
 
-            // B. Fixation Cross
-            const fixation = {
+            // C. Block Break (Show if block changes, but not if we just showed a Task/Module break)
+            if (row.block_id !== current_block) {
+                if (current_block !== "" && row.task_id === current_task) {
+                    timeline.push({
+                        type: jsPsychHtmlKeyboardResponse,
+                        stimulus: `<h2>Block Complete</h2>
+                                   <p>Take a brief moment to rest your eyes.</p>
+                                   <p>Press SPACE to continue.</p>`,
+                        choices: [' ']
+                    });
+                }
+                current_block = row.block_id;
+            }
+
+            // Fixation Cross
+            timeline.push({
                 type: jsPsychHtmlKeyboardResponse,
                 stimulus: '<div style="font-size: 60px;">+</div>',
                 choices: "NO_KEYS",
                 trial_duration: 500
-            };
+            });
 
-            // C. The Face Stimulus Trial
-            const face_trial = {
+            // The Face Stimulus (Now with 500ms duration)
+            timeline.push({
                 type: jsPsychHtmlKeyboardResponse,
                 stimulus: `<img src="${row.stimulus}" class="stimulus-image">`,
                 choices: ['f', 'j'],
+                stimulus_duration: 500, // <--- Image disappears after 500ms
+                // trial_duration: 500, // <--- Uncomment this if you want the trial to FORCE END at 500ms without a response
                 data: {
                     task_id: row.task_id,
                     module_id: row.module_id,
+                    block_id: row.block_id,
                     is_target: row.is_target,
                     target_type: row.target_type,
                     intensity: row.intensity,
                     expression: row.expression,
                     actor_category: row.actor_category
                 },
-                on_finish: function(data) {
-                    // Calculate feedback instantly when they press F or J
+                on_finish: function (data) {
                     data.feedback_display = calculateFeedback(data.is_target, data.response, data.intensity);
                     data.correct = ((data.is_target == 1 && data.response === key_target) || (data.is_target == 0 && data.response === key_nontarget));
                 }
-            };
+            });
 
-            // D. The Social Feedback Trial
-            const feedback_trial = {
+            // The Social Feedback Trial
+            timeline.push({
                 type: jsPsychHtmlKeyboardResponse,
-                stimulus: function() {
-                    // Pull the feedback generated in the previous step
+                stimulus: function () {
                     return jsPsych.data.get().last(1).values()[0].feedback_display;
                 },
                 choices: "NO_KEYS",
                 trial_duration: 1500
-            };
-
-            // Push the sequence: Fixation -> Face -> Feedback
-            timeline.push(fixation, face_trial, feedback_trial);
+            });
         });
 
-        // 4. End Screen
         timeline.push({
             type: jsPsychHtmlKeyboardResponse,
             stimulus: "<h2>Experiment Complete!</h2><p>Please wait a moment while your data is securely saved.</p>",
@@ -198,8 +241,8 @@
             trial_duration: 3000
         });
 
-        // 5. Start the Experiment
         jsPsych.run(timeline);
     }
-  </script>
+</script>
+
 </html>
