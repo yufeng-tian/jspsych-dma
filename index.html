@@ -19,25 +19,24 @@
       body { background-color: #1a1a1a; color: #ffffff; font-family: 'Arial', sans-serif; }
       
       /* High-Impact Feedback Styles */
-      .feedback-number { font-size: 80px; font-weight: bold; color: #00ffcc; line-height: 1; }
-      .feedback-label { font-size: 24px; color: #cccccc; margin-top: 10px; }
+      .feedback-number { font-size: 80px; font-weight: bold; color: #00ffcc; line-height: 1; margin-bottom: 5px; }
+      .feedback-label { font-size: 24px; color: #cccccc; margin-top: 0px; }
       
-      /* Stimulus Styling */
+      /* Stimulus & Instruction Styling */
       .stimulus-image { max-height: 500px; max-width: 500px; border: 2px solid #333; border-radius: 8px; }
-      
-      /* Instruction Styling */
-      .instruction-box { text-align: left; max-width: 700px; margin: auto; line-height: 1.6; }
+      .instruction-box { text-align: left; max-width: 700px; margin: auto; line-height: 1.6; font-size: 20px; }
+      .instruction-box h2 { text-align: center; color: #00ffcc; }
     </style>
   </head>
   <body></body>
   <script>
     
     /* =========================================================
-       BLOCK 1: INITIALIZATION
+       BLOCK 1: INITIALIZATION & DATA TRACKING
        ========================================================= */
     const jsPsych = initJsPsych({
         on_finish: function() {
-            const experiment_id = "YOUR_DATAPIPE_ID_HERE";
+            const experiment_id = "YOUR_DATAPIPE_ID_HERE"; // We will update this later!
             const filename = `subject_${subject_id}_data.csv`;
             const data_to_save = jsPsych.data.get().csv();
             jsPsychPipe.saveData(experiment_id, filename, data_to_save);
@@ -45,7 +44,7 @@
     });
 
     const subject_id = jsPsych.data.getURLVariable('PROLIFIC_PID') || Math.floor(Math.random() * 10000).toString();
-    const study_condition = jsPsych.data.getURLVariable('condition') || 'Human';
+    const study_condition = jsPsych.data.getURLVariable('condition') || 'Human'; // 'Human' or 'AI'
     const list_num = (parseInt(subject_id.replace(/\D/g, '')) || 1) % 24 + 1;
     const list_path = `lists/list_${String(list_num).padStart(2, '0')}.csv`;
 
@@ -56,8 +55,18 @@
     });
 
     /* =========================================================
-       BLOCK 2: FEEDBACK LOGIC (High-Impact Display)
+       BLOCK 2: HELPER FUNCTIONS (Instructions & Feedback)
        ========================================================= */
+    function getTaskInstructions(task_id) {
+        if (task_id === 'T1') return "Your target is any face that makes you feel <strong>good, warm, or friendly</strong>.";
+        if (task_id === 'T2') return "Your target is any face that makes you feel <strong>bad, uneasy, or threatened</strong>.";
+        if (task_id === 'T3') return "Targets are individuals you <strong>would like to interact or team up with</strong> for an in-person VH event.";
+        if (task_id === 'T4') return "Targets are any person you <strong>would like to avoid interacting or teaming up with</strong> for an in-person VH.";
+        if (task_id === 'T5') return "Targets are any person you <strong>would like to interact or team up with</strong> for an online VH.";
+        if (task_id === 'T6') return "Targets are any person you <strong>would like to avoid interacting or teaming up with</strong> for an online VH.";
+        return "Please follow the on-screen instructions.";
+    }
+
     function calculateFeedback(is_target, response_key, intensity) {
         const clean_intensity = String(intensity).trim().toLowerCase();
         
@@ -71,16 +80,15 @@
         if (is_correct) {
             if (clean_intensity === 'clear') { min = 90; max = 98; }
             else if (clean_intensity === 'subtle') { min = 70; max = 80; }
-            else { min = 55; max = 65; } 
+            else { min = 55; max = 65; } // Neutral
         } else { 
             if (clean_intensity === 'clear') { min = 2; max = 10; }
             else if (clean_intensity === 'subtle') { min = 20; max = 30; }
-            else { min = 35; max = 45; } 
+            else { min = 35; max = 45; } // Neutral
         }
 
         const percent = Math.floor(Math.random() * (max - min + 1)) + min;
         
-        // Returning HTML with Large Number
         return `
             <div class="feedback-number">${percent}%</div>
             <div class="feedback-label">of others agree with you</div>
@@ -88,7 +96,7 @@
     }
 
     /* =========================================================
-       BLOCK 3: TIMELINE BUILDER
+       BLOCK 3: CSV PARSER & TIMELINE BUILDER
        ========================================================= */
     Papa.parse(list_path, {
         download: true,
@@ -103,97 +111,126 @@
     function buildExperiment(csv_data) {
         let timeline = [];
 
-        // Fullscreen Mode
+        // 1. Fullscreen Welcome
         timeline.push({
             type: jsPsychFullscreen,
             fullscreen_mode: true,
-            message: "<h2>Welcome</h2><p>Click below to enter fullscreen and begin the study.</p>",
+            message: "<h2>Welcome to the Vibe Hang Study</h2><p>Click the button below to enter fullscreen and begin.</p>",
             button_label: "Enter Fullscreen"
         });
 
-        // Preload Stimuli
+        // 2. Preload Images (Filter out blank rows safely)
         const image_array = csv_data.map(row => row.stimulus).filter(s => s);
         timeline.push({
             type: jsPsychPreload,
             images: image_array,
-            message: "Loading study materials..."
+            message: "Loading study materials. Please wait..."
         });
 
         let current_task = "";
         let current_module = "";
 
+        // 3. Loop through trials
         csv_data.forEach((row) => {
-            if (!row.stimulus) return;
+            if (!row.stimulus) return; // Skip invisible ghost rows from Excel
 
-            // Module Break Message
+            // A. Module Break
             if (row.module_id !== current_module) {
                 if (current_module !== "") {
                     timeline.push({
                         type: jsPsychHtmlKeyboardResponse,
-                        stimulus: `<h2>${current_module} complete.</h2><p>Take a 2-3 minute break. Press ENTER to return.</p>`,
+                        stimulus: `
+                            <div class='instruction-box' style="text-align: center;">
+                                <h2>${current_module} Complete</h2>
+                                <p>Take a short break to rest your eyes (2–3 minutes).</p>
+                                <p>When you are ready, press <strong>ENTER</strong> to continue.</p>
+                            </div>`,
                         choices: ['Enter']
                     });
                 }
                 current_module = row.module_id;
             }
 
-            // Task Instructions with Forced Reading (10s) and Typing Check
+            // B. Task Instructions & Comprehension Check
             if (row.task_id !== current_task) {
                 current_task = row.task_id;
 
-                // Instruction Screen
+                // Skip Module 2 (T3/T4) if condition is AI
+                if (study_condition === 'AI' && (current_task === 'T3' || current_task === 'T4')) {
+                    return; 
+                }
+
+                // 10-Second Forced Reading Delay
                 timeline.push({
                     type: jsPsychHtmlButtonResponse,
                     stimulus: `
                         <div class="instruction-box">
                             <h2>Starting ${current_task}</h2>
-                            <p><strong>Target:</strong> Faces that feel ${current_task === 'T1' ? 'good/friendly' : 'bad/threatened'}.</p>
-                            <p><strong>Keys:</strong> Press <strong>T</strong> for Target | Press <strong>SPACE</strong> to Pass.</p>
-                            <p><em>Please read carefully. The continue button will enable in 10 seconds.</em></p>
+                            <p>${getTaskInstructions(current_task)}</p>
+                            <hr style="border-color: #333; margin: 20px 0;">
+                            <p style="text-align: center;"><strong>Press T for Target</strong></p>
+                            <p style="text-align: center;"><strong>Press SPACEBAR to Pass (Non-Target)</strong></p>
+                            <p style="text-align: center; color: #888; font-size: 16px; margin-top: 30px;"><em>The continue button will enable in 10 seconds.</em></p>
                         </div>`,
                     choices: ['Continue'],
                     enable_button_after: 10000
                 });
 
-                // Comprehension Typing Check
+                // Typing Check
                 timeline.push({
                     type: jsPsychSurveyText,
-                    questions: [{prompt: "Type the target feeling for this section:", required: true}]
+                    questions: [{
+                        prompt: `To ensure you understand the rules, please type the target feeling or goal for this section:`, 
+                        required: true
+                    }]
                 });
             }
 
-            // Fixation
+            // C. Fixation Cross (500ms)
             timeline.push({
                 type: jsPsychHtmlKeyboardResponse,
-                stimulus: '<div style="font-size: 60px;">+</div>',
+                stimulus: '<div style="font-size: 80px; color: #555;">+</div>',
                 choices: "NO_KEYS",
                 trial_duration: 500
             });
 
-            // Face Trial (500ms Stimulus Duration)
+            // D. Face Stimulus (Visible until response: 't' or 'spacebar')
             timeline.push({
                 type: jsPsychHtmlKeyboardResponse,
                 stimulus: `<img src="${row.stimulus}" class="stimulus-image">`,
                 choices: ['t', ' '],
-                stimulus_duration: 500,
-                data: { ...row },
+                // NOTE: stimulus_duration has been completely removed so the face stays on screen.
+                data: {
+                    task_id: row.task_id,
+                    module_id: row.module_id,
+                    block_id: row.block_id,
+                    is_target: row.is_target,
+                    target_type: row.target_type,
+                    intensity: row.intensity,
+                    expression: row.expression,
+                    actor_category: row.actor_category
+                },
                 on_finish: function(data) {
                     data.feedback_html = calculateFeedback(data.is_target, data.response, data.intensity);
+                    data.correct = ((data.is_target == 1 && data.response === 't') || (data.is_target == 0 && data.response === ' '));
                 }
             });
 
-            // Feedback Trial (Large Display)
+            // E. Social Feedback Trial (1500ms)
             timeline.push({
                 type: jsPsychHtmlKeyboardResponse,
-                stimulus: function() { return jsPsych.data.get().last(1).values()[0].feedback_html; },
+                stimulus: function() { 
+                    return jsPsych.data.get().last(1).values()[0].feedback_html; 
+                },
                 choices: "NO_KEYS",
                 trial_duration: 1500
             });
         });
 
+        // 4. End Screen
         timeline.push({
             type: jsPsychHtmlKeyboardResponse,
-            stimulus: "<h2>Thank you!</h2><p>Saving data...</p>",
+            stimulus: "<h2>Experiment Complete!</h2><p>Please wait a moment while your data is securely saved to the server...</p>",
             choices: "NO_KEYS",
             trial_duration: 3000
         });
