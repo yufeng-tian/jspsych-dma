@@ -38,11 +38,7 @@
     /* =========================================================
        BLOCK 1: INITIALIZATION & DATA TRACKING
        ========================================================= */
-    const subject_id = jsPsych.data.getURLVariable('PROLIFIC_PID') || Math.floor(Math.random() * 10000).toString();
-    const study_condition = jsPsych.data.getURLVariable('condition') || 'Human'; // 'Human' or 'AI'
-    const list_num = (parseInt(subject_id.replace(/\D/g, '')) || 1) % 24 + 1;
-    const list_path = `lists/list_${String(list_num).padStart(2, '0')}.csv`;
-
+    // 1. Initialize jsPsych FIRST
     const jsPsych = initJsPsych({
         on_finish: function() {
             // ---> UPDATE THIS LATER: Your DataPipe ID
@@ -59,6 +55,12 @@
             });
         }
     });
+
+    // 2. NOW we can extract variables from the URL using jsPsych
+    const subject_id = jsPsych.data.getURLVariable('PROLIFIC_PID') || Math.floor(Math.random() * 10000).toString();
+    const study_condition = jsPsych.data.getURLVariable('condition') || 'Human'; // 'Human' or 'AI'
+    const list_num = (parseInt(subject_id.replace(/\D/g, '')) || 1) % 24 + 1;
+    const list_path = `lists/list_${String(list_num).padStart(2, '0')}.csv`;
 
     jsPsych.data.addProperties({
         subject_id: subject_id,
