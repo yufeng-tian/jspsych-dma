@@ -19,23 +19,25 @@
       /* Dark Background & Core Styling */
       body { background-color: #1a1a1a; color: #ffffff; font-family: 'Arial', sans-serif; }
       
-      /* Target Keywords Styling (Uniform size and color) */
+      /* Target Keywords Styling */
       .target-word { color: #00ffcc; font-weight: bold; font-size: 24px; }
       .avoid-word { color: #ff5555; font-weight: bold; font-size: 24px; }
       
-      /* High-Impact Feedback Styles */
+      /* Feedback Styles */
       .feedback-number { font-size: 80px; font-weight: bold; color: #00ffcc; line-height: 1; margin-bottom: 5px; }
       .feedback-label { font-size: 24px; color: #cccccc; margin-top: 0px; }
       
-      /* Stimulus & UI Styling */
+      /* UI Styling */
       .stimulus-image { max-height: 500px; max-width: 500px; border: 2px solid #333; border-radius: 8px; margin-top: 40px;}
       .instruction-box { text-align: left; max-width: 800px; margin: auto; line-height: 1.6; font-size: 22px; padding: 20px;}
       
-      /* Practice Banner */
+      /* Progress Tracker & Practice Banner */
+      .progress-tracker { position: absolute; top: 15px; right: 20px; font-size: 16px; color: #777; font-weight: bold; }
       .practice-banner { position: absolute; top: 20px; left: 50%; transform: translateX(-50%); background-color: #ffaa00; color: #000; padding: 5px 20px; font-weight: bold; font-size: 20px; border-radius: 5px; letter-spacing: 2px;}
       
-      /* Override jsPsych default styling for survey text to be visible on dark background */
-      .jspsych-survey-multi-choice-question { text-align: left; margin-bottom: 20px; font-size: 20px;}
+      /* jsPsych Overrides for Dark Mode */
+      .jspsych-survey-multi-choice-question { text-align: left; margin-bottom: 30px; font-size: 20px;}
+      .jspsych-survey-multi-choice-option { margin-bottom: 10px; }
       .jspsych-btn { font-size: 18px; padding: 10px 20px; margin-top: 20px;}
     </style>
   </head>
@@ -47,52 +49,55 @@
        ========================================================= */
     const jsPsych = initJsPsych({
         on_finish: function() {
-            // ---> UPDATE THIS: Your DataPipe ID
             const experiment_id = "YOUR_DATAPIPE_ID_HERE"; 
-            
             const filename = `subject_${subject_id}_data.csv`;
             const data_to_save = jsPsych.data.get().csv();
             
-            // Save to OSF, then instantly redirect to Layer 5 (Qualtrics Anxiety/Depression)
             jsPsychPipe.saveData(experiment_id, filename, data_to_save).then(function() {
-                // ---> UPDATE THIS: Your Qualtrics Survey 3 Link
                 const qualtrics_url = "https://yourschool.qualtrics.com/jfe/form/SV_123456789";
                 window.location.href = `${qualtrics_url}?PROLIFIC_PID=${subject_id}&condition=${study_condition}`;
             });
         }
     });
 
-    // Extract Data from URL (Layer 2 Hand-off)
     const subject_id = jsPsych.data.getURLVariable('PROLIFIC_PID') || Math.floor(Math.random() * 10000).toString();
     const study_condition = jsPsych.data.getURLVariable('condition') || 'Human'; 
     const list_num = (parseInt(subject_id.replace(/\D/g, '')) || 1) % 24 + 1;
     const list_path = `lists/list_${String(list_num).padStart(2, '0')}.csv`;
 
-    jsPsych.data.addProperties({
-        subject_id: subject_id,
-        condition: study_condition,
-        list_used: list_path
-    });
+    jsPsych.data.addProperties({ subject_id: subject_id, condition: study_condition, list_used: list_path });
 
     /* =========================================================
-       BLOCK 2: HELPER FUNCTIONS
+       BLOCK 2: TEXT GENERATORS
        ========================================================= */
-    function getInstructionHTML(task_id, condition) {
+    function getModuleIntro(study, module_id, seq_num) {
         let text = "";
-        if (condition === 'AI') {
-            if (task_id === 'T1') text = `In this task, your target is any AI-generated face that makes you feel <span class="target-word">good, warm, or friendly</span>.`;
-            if (task_id === 'T2') text = `In this task, your target is any AI-generated face that makes you feel <span class="avoid-word">bad, uneasy, or threatened</span>.`;
-            if (task_id === 'T5') text = `For this task, targets are any AI-agent you would <span class="target-word">Like</span> to interact or team up with for your VH sessions.`;
-            if (task_id === 'T6') text = `For this task, targets are any AI-agent you would <span class="avoid-word">Avoid</span> interacting or teaming up with for your VH sessions.`;
-        } else {
-            if (task_id === 'T1') text = `In this task, your target is any face that makes you feel <span class="target-word">good, warm, or friendly</span>.`;
-            if (task_id === 'T2') text = `In this task, your target is any face that makes you feel <span class="avoid-word">bad, uneasy, or threatened</span>.`;
-            if (task_id === 'T3') text = `For this task, targets are any individuals you would <span class="target-word">Like</span> to interact or team up with for your in-person VH sessions.`;
-            if (task_id === 'T4') text = `For this task, targets are any individuals you would <span class="avoid-word">Avoid</span> interacting or teaming up with for your in-person VH sessions.`;
-            if (task_id === 'T5') text = `For this task, targets are any individuals you would <span class="target-word">Like</span> to interact or team up with for your online VH sessions.`;
-            if (task_id === 'T6') text = `For this task, targets are any individuals you would <span class="avoid-word">Avoid</span> interacting or teaming up with for your online VH sessions.`;
+        if (study === 'Human') {
+            if (module_id.includes('1')) text = "In this module, you will view a series of sequentially presented photos.<br><br>Please follow the instructions provided at the start of each section.";
+            else if (module_id.includes('2')) text = "In this module, you will view photos of other VH participants who, based on the ZIP code you provided in the prescreening survey, live within approximately 30 minutes of your location.<br><br>These participants will attend in-person VH events (e.g., Coffee & Convo, Books & Booze, Themed Potlucks, Fandom Trivia Night, Craft & Draft).<br><br>Each section includes its own instructions; please read them carefully before you begin.<br><br><span style='font-size:16px; color:#888;'>(Note that these individuals have consented to the use—and limited editing—of their photos for research purposes in this study. If you are interested in contributing a photo for use in future studies, you may contact the research team after completing the experiment.)</span>";
+            else if (module_id.includes('3')) text = "In this module, you will view photos of VH participants who live all across the United States.<br><br>These participants will attend online VH events (e.g., Virtual Game Night, Digital Co-Working, Streaming Party, Online Book Club, or Collaborative Playlist Session, etc.).<br><br>Each section includes its own instructions; please read them carefully before you begin.<br><br><span style='font-size:16px; color:#888;'>(Note that these individuals have consented to the use—and limited editing—of their photos for research purposes in this study. If you are interested in contributing a photo for use in future studies, you may contact the research team after completing the experiment.)</span>";
+        } else if (study === 'AI') {
+            if (module_id.includes('1')) text = "In this module, you will view a series of sequentially presented AI-generated profiles.<br><br>These digital agents were automatically synthesized from 'oceans' of unfiltered social data across platforms such as Discord, YouTube, and Facebook.<br><br>Please follow the instructions provided at the start of each section.";
+            else if (module_id.includes('2')) text = "In this module, you will view digital profiles generated through an algorithmic synthesis of raw social data from across the United States.<br><br>Because these AI agents were trained on 'oceans' of unfiltered online interactions (e.g., Discord, YouTube, Facebook), they reflect the full spectrum of human behavior—ranging from approachable and friendly to distant or even hostile.<br><br>Think of these proxies as digital mirrors of real-world social dynamics; their temperaments are intentionally unpredictable.<br><br>It is up to you to carefully evaluate the 'vibe' of each agent to determine if they are a suitable match for your social cohort.<br><br>Each section includes its own instructions. Please read them carefully before you begin.";
         }
-        return `<div class="instruction-box"><p>${text}</p><p>Please decide whether each face is a target.</p></div>`;
+        return `<div class="instruction-box"><h2 style="color:#00ffcc; text-align:center;">Section ${seq_num}</h2><p>${text}</p><p style="text-align:right; font-size:14px; color:#555;">[${module_id}]</p></div>`;
+    }
+
+    function getTaskTargetText(study, task_id) {
+        if (study === 'AI') {
+            if (task_id === 'T1') return `In this task, your target is any AI-generated face that makes you feel <span class="target-word">good, warm, or friendly</span>.`;
+            if (task_id === 'T2') return `In this task, your target is any AI-generated face that makes you feel <span class="avoid-word">bad, uneasy, or threatened</span>.`;
+            if (task_id === 'T5') return `For this task, targets are any AI-agent you would <span class="target-word">like to interact or team up with</span> for your VH sessions.`;
+            if (task_id === 'T6') return `For this task, targets are any AI-agent you would <span class="avoid-word">avoid interacting or teaming up with</span> for your VH sessions.`;
+        } else {
+            if (task_id === 'T1') return `In this task, your target is any face that makes you feel <span class="target-word">good, warm, or friendly</span>.`;
+            if (task_id === 'T2') return `In this task, your target is any face that makes you feel <span class="avoid-word">bad, uneasy, or threatened</span>.`;
+            if (task_id === 'T3') return `For this task, targets are any individuals you would <span class="target-word">like to interact or team up with</span> for your VH sessions.`;
+            if (task_id === 'T4') return `For this task, targets are any individuals you would <span class="avoid-word">avoid interacting or teaming up with</span> for your VH sessions.`;
+            if (task_id === 'T5') return `For this task, targets are any individuals you would <span class="target-word">like to interact or team up with</span> for your VH sessions.`;
+            if (task_id === 'T6') return `For this task, targets are any individuals you would <span class="avoid-word">avoid interacting or teaming up with</span> for your VH sessions.`;
+        }
+        return "Please follow the instructions carefully.";
     }
 
     function calculateFeedback(is_target, response_key, intensity) {
@@ -109,190 +114,198 @@
             else if (clean_intensity === 'subtle') { min = 20; max = 30; }
             else { min = 35; max = 45; }
         }
-
-        const percent = Math.floor(Math.random() * (max - min + 1)) + min;
-        return `<div class="feedback-number">${percent}%</div><div class="feedback-label">of others agree with you</div>`;
+        return `<div class="feedback-number">${Math.floor(Math.random() * (max - min + 1)) + min}%</div><div class="feedback-label">of others agree with you</div>`;
     }
 
     /* =========================================================
-       BLOCK 3: TIMELINE BUILDER
+       BLOCK 3: HIERARCHICAL TIMELINE BUILDER
        ========================================================= */
     Papa.parse(list_path, {
-        download: true,
-        header: true,
-        dynamicTyping: true,
-        skipEmptyLines: true,
+        download: true, header: true, dynamicTyping: true, skipEmptyLines: true,
         complete: function(results) { buildExperiment(results.data); }
     });
 
     function buildExperiment(csv_data) {
         let timeline = [];
 
-        // 1. Fullscreen
         timeline.push({
-            type: jsPsychFullscreen,
-            fullscreen_mode: true,
-            message: "<div class='instruction-box' style='text-align:center;'><h2>Task Environment Loaded</h2><p>Click below to enter fullscreen and begin the behavioral trials.</p></div>",
+            type: jsPsychFullscreen, fullscreen_mode: true,
+            message: "<div class='instruction-box' style='text-align:center;'><h2>Task Environment Loaded</h2><p>Click below to enter fullscreen and begin.</p></div>",
             button_label: "Enter Fullscreen"
         });
 
-        // 2. Preload
         const image_array = csv_data.map(row => row.stimulus).filter(s => s);
         timeline.push({ type: jsPsychPreload, images: image_array, message: "Loading visual assets..." });
 
-        let current_task = "";
-        let current_module = "";
+        let current_module = null;
+        let current_task = null;
+        let current_block = null;
 
-        csv_data.forEach((row, index) => {
+        // Counters for participant UI
+        let seq_module = 0;
+        let seq_task = 0;
+        let seq_block = 0;
+
+        csv_data.forEach((row) => {
             if (!row.stimulus) return;
 
-            // A. MODULE BREAK & PRACTICE GENERATION
-            if (row.module_id !== current_module) {
-                // Break Screen (except for the very first module)
-                if (current_module !== "") {
+            let is_new_module = (row.module_id !== current_module);
+            let is_new_task = (row.task_id !== current_task);
+            let is_new_block = (row.block_id !== current_block);
+
+            // Update Counters chronologically
+            if (is_new_module) { seq_module++; seq_task = 0; }
+            if (is_new_task) { seq_task++; seq_block = 0; }
+            if (is_new_block) { seq_block++; }
+
+            // 1. MODULE LEVEL PAUSE & INTRO
+            if (is_new_module) {
+                if (current_module !== null) {
                     timeline.push({
                         type: jsPsychHtmlKeyboardResponse,
-                        stimulus: `<div class='instruction-box' style='text-align:center;'><h2>Module Complete</h2><p>Take a short break if needed.</p><p>Please return within 2-3 minutes to ensure consistent task performance.</p><p>Press <strong>SPACE BAR</strong> to continue.</p></div>`,
+                        stimulus: `<div class='instruction-box' style='text-align:center;'><h2>Section Complete.</h2><p>Take a short break if needed.</p><p>Please return within 2-3 minutes to ensure consistent task performance.</p><br><p style='color:#888;'>Press SPACE BAR to continue.</p></div>`,
                         choices: [' ']
                     });
                 }
                 current_module = row.module_id;
 
-                // Grab 5 practice trials from the start of this new module
-                let practice_rows = csv_data.filter(r => r.module_id === current_module).slice(0, 5);
-                
-                // Add "Begin Practice" message
+                timeline.push({
+                    type: jsPsychHtmlButtonResponse,
+                    stimulus: getModuleIntro(study_condition, current_module, seq_module),
+                    choices: ['Continue']
+                });
+            } 
+            
+            // 2. TASK LEVEL PAUSE (If part changed, but section did not)
+            else if (is_new_task) {
                 timeline.push({
                     type: jsPsychHtmlKeyboardResponse,
-                    stimulus: `<div class='instruction-box' style='text-align:center;'><h3>Before the real trials begin, you will complete 5 Practice Trials.</h3><p>Press <strong>SPACE BAR</strong> to start practice.</p></div>`,
-                    choices: [' ']
-                });
-
-                // Generate Practice Sequence
-                practice_rows.forEach((p_row) => {
-                    timeline.push({ type: jsPsychHtmlKeyboardResponse, stimulus: '<div style="font-size: 80px;">+</div>', choices: "NO_KEYS", trial_duration: 500 });
-                    timeline.push({
-                        type: jsPsychHtmlKeyboardResponse,
-                        stimulus: `<div class="practice-banner">PRACTICE</div><img src="${p_row.stimulus}" class="stimulus-image">`,
-                        choices: ['t', ' '],
-                        data: { is_practice: true, task_id: p_row.task_id }, // TAGGED AS PRACTICE FOR HSSM
-                        on_finish: function(data) { data.feedback_html = calculateFeedback(p_row.is_target, data.response, p_row.intensity); }
-                    });
-                    timeline.push({ type: jsPsychHtmlKeyboardResponse, stimulus: function() { return jsPsych.data.get().last(1).values()[0].feedback_html; }, choices: "NO_KEYS", trial_duration: 1500 });
-                });
-
-                // End Practice message
-                timeline.push({
-                    type: jsPsychHtmlKeyboardResponse,
-                    stimulus: `<div class='instruction-box' style='text-align:center;'><h3>Practice Complete.</h3><p>The real trials will now begin.</p><p>Press <strong>SPACE BAR</strong> to continue.</p></div>`,
+                    stimulus: `<div class='instruction-box' style='text-align:center;'><h2>Part Complete.</h2><p>Take a brief moment to rest your eyes before the next section begins.</p><br><p style='color:#888;'>Press SPACE BAR to continue.</p></div>`,
                     choices: [' ']
                 });
             }
 
-            // B. TASK INSTRUCTIONS (Slide-by-Slide PPT format)
-            if (row.task_id !== current_task) {
+            // --- TASK INSTRUCTION & PRACTICE INJECTION ---
+            if (is_new_task) {
                 current_task = row.task_id;
-                if (study_condition === 'AI' && (current_task === 'T3' || current_task === 'T4')) return; 
+                current_block = row.block_id;
 
-                // Slide 1 & 2: Rules
+                // A. Instructions (Slide 1 & 2)
                 let instruction_pages = {
                     type: jsPsychInstructions,
                     pages: [
-                        getInstructionHTML(current_task, study_condition),
+                        `<div class="instruction-box"><h2 style="color:#00ffcc; text-align:center;">Part ${seq_task}</h2><p>${getTaskTargetText(study_condition, current_task)}</p><br><p>Please decide whether each face is a target.</p><p style="text-align:right; font-size:14px; color:#555;">[${current_module} | ${current_task}]</p></div>`,
                         `<div class="instruction-box"><p>On each trial, you will receive social feedback indicating how many other participants agreed with your decision (e.g., '80% of others agree with you').</p></div>`
                     ],
                     show_clickable_nav: true
                 };
 
-                // Slide 3: Quiz Generation based on PPT
-                let multi_choice_questions = [];
+                // B. Comprehension Quiz (Slide 3)
+                let q_prompts = [];
+                let correct_answers = [];
+                
                 if (current_task === 'T1' || current_task === 'T2') {
-                    multi_choice_questions.push({
-                        prompt: "The target in this section is to identify faces that make you feel ______",
-                        options: ["good, warm, or friendly", "bad, uneasy, or threatened"], required: true, name: 'TargetCheck'
-                    });
+                    q_prompts.push({ prompt: "The target in this section is to identify faces that make you feel ______", options: ["good, warm, or friendly", "bad, uneasy, or threatened"], required: true, name: 'Q1' });
+                    correct_answers.push(current_task === 'T1' ? "good, warm, or friendly" : "bad, uneasy, or threatened");
                 } else {
-                    multi_choice_questions.push({
-                        prompt: "In this section, a target is a person you would ______ interacting with.",
-                        options: ["Like", "Avoid"], required: true, name: 'TargetCheck'
-                    });
+                    q_prompts.push({ prompt: "In this section, a target is a person you would ______ interacting with.", options: ["Like", "Avoid"], required: true, name: 'Q1' });
+                    correct_answers.push((current_task === 'T3' || current_task === 'T5') ? "Like" : "Avoid");
+                    
                     if (study_condition === 'Human') {
-                        multi_choice_questions.push({
-                            prompt: "The VH mode (in-person or online) used in this section is ______.",
-                            options: ["In-person", "Online"], required: true, name: 'ContextCheck'
-                        });
+                        q_prompts.push({ prompt: "The VH mode (in-person or online) used in this section is ______.", options: ["In-person", "Online"], required: true, name: 'Q2' });
+                        correct_answers.push((current_task === 'T3' || current_task === 'T4') ? "In-person" : "Online");
                     }
-                }
-
-                // Define Correct Answers
-                let correct_target = (current_task === 'T1' || current_task === 'T3' || current_task === 'T5') ? multi_choice_questions[0].options[0] : multi_choice_questions[0].options[1];
-                let correct_context = null;
-                if (study_condition === 'Human' && (current_task === 'T3' || current_task === 'T4' || current_task === 'T5' || current_task === 'T6')) {
-                    correct_context = (current_task === 'T3' || current_task === 'T4') ? "In-person" : "Online";
                 }
 
                 let check_screen = {
                     type: jsPsychSurveyMultiChoice,
                     preamble: `<div class="instruction-box" style="text-align:center;"><h2 style="color:#ffaa00;">Please select your answers:</h2></div>`,
-                    questions: multi_choice_questions,
+                    questions: q_prompts,
                     on_finish: function(data) {
                         let passed = true;
-                        if (data.response.TargetCheck !== correct_target) passed = false;
-                        if (correct_context && data.response.ContextCheck !== correct_context) passed = false;
+                        if (data.response.Q1 !== correct_answers[0]) passed = false;
+                        if (q_prompts.length > 1 && data.response.Q2 !== correct_answers[1]) passed = false;
                         data.passed = passed;
                     }
                 };
 
-                let error_screen = {
-                    type: jsPsychHtmlButtonResponse,
-                    stimulus: `<div class="instruction-box" style="text-align:center; color:#ff5555;"><h2>Incorrect</h2><p>You will now be sent back to re-read the instructions.</p></div>`,
-                    choices: ['Go Back'],
-                    conditional_function: function() { return !jsPsych.data.get().last(1).values()[0].passed; }
+                // STRICT CONDITIONAL ERROR NODE (Fixes the overlapping bug)
+                let error_node = {
+                    timeline: [{
+                        type: jsPsychHtmlButtonResponse,
+                        stimulus: `<div class="instruction-box" style="text-align:center; color:#ff5555;"><h2>Incorrect</h2><p>One or more of your answers were incorrect.</p><p>You will now be sent back to re-read the instructions.</p></div>`,
+                        choices: ['Go Back']
+                    }],
+                    conditional_function: function() { 
+                        return jsPsych.data.get().last(1).values()[0].passed === false; 
+                    }
                 };
 
-                let instruction_loop = {
-                    timeline: [instruction_pages, check_screen, error_screen],
-                    loop_function: function(data) { return !(data.filter({passed: true}).count() > 0); }
-                };
+                timeline.push({
+                    timeline: [instruction_pages, check_screen, error_node],
+                    loop_function: function(data) {
+                        let quiz_result = data.filter({trial_type: 'survey-multi-choice'}).last(1).values()[0];
+                        return quiz_result.passed === false; 
+                    }
+                });
 
-                timeline.push(instruction_loop);
-
-                // Slide 4: Motor Response Rules
+                // C. Motor Rules (Slide 4)
                 timeline.push({
                     type: jsPsychHtmlKeyboardResponse,
-                    stimulus: `
-                        <div class="instruction-box" style="text-align:center;">
-                            <p>Rest one thumb on the <strong>SPACE BAR</strong>, and one index finger on the <strong>T</strong> key.</p><br>
-                            <p>If the face is a TARGET, press <strong>T</strong>.</p>
-                            <p>If the face is NOT a target, press the <strong>SPACE BAR</strong> to PASS.</p><br>
-                            <p style="color:#888; font-size: 18px;">Press the SPACE BAR to begin.</p>
-                        </div>`,
+                    stimulus: `<div class="instruction-box" style="text-align:center;"><p>Rest one thumb on the <strong>SPACE BAR</strong>, and one index finger on the <strong>T</strong> key.</p><br><p>If the face is a TARGET, press <strong>T</strong>.</p><p>If the face is NOT a target, press the <strong>SPACE BAR</strong> to PASS.</p><br><p style="color:#888;">Press the SPACE BAR to begin Practice.</p></div>`,
+                    choices: [' ']
+                });
+
+                // D. Automated Practice Extraction
+                let practice_rows = csv_data.filter(r => r.task_id === current_task).slice(0, 5);
+                practice_rows.forEach((p_row) => {
+                    timeline.push({ type: jsPsychHtmlKeyboardResponse, stimulus: '<div style="font-size: 80px; color:#555;">+</div>', choices: "NO_KEYS", trial_duration: 500 });
+                    timeline.push({
+                        type: jsPsychHtmlKeyboardResponse,
+                        stimulus: `<div class="practice-banner">PRACTICE</div><img src="${p_row.stimulus}" class="stimulus-image">`,
+                        choices: ['t', ' '], data: { is_practice: true, task_id: p_row.task_id },
+                        on_finish: function(data) { data.feedback_html = calculateFeedback(p_row.is_target, data.response, p_row.intensity); }
+                    });
+                    timeline.push({ type: jsPsychHtmlKeyboardResponse, stimulus: function() { return jsPsych.data.get().last(1).values()[0].feedback_html; }, choices: "NO_KEYS", trial_duration: 1500 });
+                });
+
+                timeline.push({
+                    type: jsPsychHtmlKeyboardResponse,
+                    stimulus: `<div class='instruction-box' style='text-align:center;'><h2>Practice Complete.</h2><p>The real trials will now begin.</p><br><p style='color:#888;'>Press SPACE BAR to continue.</p></div>`,
                     choices: [' ']
                 });
             }
 
-            // C. REAL TRIAL SEQUENCE
-            timeline.push({ type: jsPsychHtmlKeyboardResponse, stimulus: '<div style="font-size: 80px; color: #555;">+</div>', choices: "NO_KEYS", trial_duration: 500 });
+            // 3. BLOCK LEVEL PAUSE
+            if (is_new_block && !is_new_task && !is_new_module) {
+                timeline.push({
+                    type: jsPsychHtmlKeyboardResponse,
+                    stimulus: `<div class='instruction-box' style='text-align:center;'><h2>Block Complete.</h2><p>Take a quick stretch.</p><br><p style='color:#888;'>Press SPACE BAR when you are ready to continue.</p></div>`,
+                    choices: [' ']
+                });
+                current_block = row.block_id;
+            }
+
+            // 4. THE REAL TRIAL (Using the UI sequential counters)
+            let progress_html = `<div class="progress-tracker">Section ${seq_module} | Part ${seq_task} | Block ${seq_block}</div>`;
+
+            timeline.push({ type: jsPsychHtmlKeyboardResponse, stimulus: progress_html + '<div style="font-size: 80px; color: #555; margin-top:200px;">+</div>', choices: "NO_KEYS", trial_duration: 500 });
             
             timeline.push({
                 type: jsPsychHtmlKeyboardResponse,
-                stimulus: `<img src="${row.stimulus}" class="stimulus-image">`,
+                stimulus: progress_html + `<img src="${row.stimulus}" class="stimulus-image">`,
                 choices: ['t', ' '], 
-                data: {
-                    is_practice: false, // TAGGED AS REAL DATA
-                    task_id: row.task_id, module_id: row.module_id, block_id: row.block_id,
-                    is_target: row.is_target, intensity: row.intensity, condition: study_condition
-                },
-                on_finish: function(data) { data.feedback_html = calculateFeedback(data.is_target, data.response, data.intensity); }
+                data: { is_practice: false, task_id: row.task_id, module_id: row.module_id, block_id: row.block_id, is_target: row.is_target, intensity: row.intensity, condition: study_condition },
+                on_finish: function(data) { data.feedback_html = progress_html + calculateFeedback(data.is_target, data.response, data.intensity); }
             });
 
             timeline.push({ type: jsPsychHtmlKeyboardResponse, stimulus: function() { return jsPsych.data.get().last(1).values()[0].feedback_html; }, choices: "NO_KEYS", trial_duration: 1500 });
         });
 
-        // 4. End Redirect
+        // 5. End Redirect
         timeline.push({
             type: jsPsychHtmlKeyboardResponse,
-            stimulus: `<div class="instruction-box" style="text-align:center;"><h2>Experiment Complete</h2><p>Saving data to secure server...</p><p>You will be redirected automatically.</p></div>`,
+            stimulus: `<div class="instruction-box" style="text-align:center;"><h2>Experiment Complete</h2><p>Saving data to secure server...</p><p>You will be redirected automatically to finish the survey.</p></div>`,
             choices: "NO_KEYS"
         });
 
