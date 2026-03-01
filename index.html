@@ -6,7 +6,6 @@
     <script src="https://unpkg.com/jspsych@7.3.4"></script>
     <script src="https://unpkg.com/@jspsych/plugin-html-keyboard-response"></script>
     <script src="https://unpkg.com/@jspsych/plugin-html-button-response"></script>
-    <script src="https://unpkg.com/@jspsych/plugin-instructions"></script>
     <script src="https://unpkg.com/@jspsych/plugin-survey-multi-choice"></script>
     <script src="https://unpkg.com/@jspsych/plugin-preload"></script>
     <script src="https://unpkg.com/@jspsych/plugin-fullscreen"></script>
@@ -18,28 +17,24 @@
     <style>
       /* --- Root Variables for SVG Background Watermarks --- */
       :root {
-        /* WiFi SVG (Online) - Dark Gray #222222 */
         --bg-online: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23222222'%3E%3Cpath d='M1 9l2 2c4.97-4.97 13.03-4.97 18 0l2-2C16.93 2.93 7.08 2.93 1 9zm8 8l3 3 3-3c-1.65-1.66-4.34-1.66-6 0zm-4-4l2 2c2.76-2.76 7.24-2.76 10 0l2-2C15.14 9.14 8.87 9.14 5 13z'/%3E%3C/svg%3E");
-        
-        /* Faceless Group SVG (In-Person) - Dark Gray #222222 */
         --bg-inperson: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23222222'%3E%3Cpath d='M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z'/%3E%3C/svg%3E");
       }
 
-      /* Dark Background & Core Styling */
-      body { background-color: #1a1a1a; color: #ffffff; font-family: 'Arial', sans-serif; height: 100vh; margin: 0; padding: 0; overflow: hidden;}
+      /* Dark Background & Core Styling (Removed strict height limits to prevent DOM stacking bugs) */
+      body { background-color: #1a1a1a; color: #ffffff; font-family: 'Arial', sans-serif; }
       
       /* Wrapper to lock content and background watermark dead center */
       .full-screen-wrapper {
-          position: fixed; top: 0; left: 0; right: 0; bottom: 0;
           display: flex; flex-direction: column; justify-content: center; align-items: center;
-          z-index: 10;
+          width: 100vw; height: 100vh;
       }
 
       /* Dynamic Background Cues (Locked to 400px, no repeat) */
       .context-online { background-image: var(--bg-online); background-repeat: no-repeat; background-size: 400px; background-position: center; }
       .context-inperson { background-image: var(--bg-inperson); background-repeat: no-repeat; background-size: 400px; background-position: center; }
 
-      /* Target Keywords Styling (Only colors allowed in instructions) */
+      /* Target Keywords Styling (STRICTLY CONSISTENT) */
       .target-word { color: #00ffcc; font-weight: bold; font-size: 24px; }
       .avoid-word { color: #ff5555; font-weight: bold; font-size: 24px; }
       
@@ -69,9 +64,7 @@
        ========================================================= */
     const jsPsych = initJsPsych({
         on_finish: function() {
-            // ---> UPDATE THIS: Your DataPipe ID
             const experiment_id = "YOUR_DATAPIPE_ID_HERE"; 
-            
             const filename = `subject_${subject_id}_data.csv`;
             const data_to_save = jsPsych.data.get().csv();
             
@@ -105,6 +98,7 @@
         return `<div class="instruction-box"><h2 style="text-align:center;">Section ${seq_num}</h2><p>${text}</p><p style="text-align:right; font-size:14px; color:#555;">[${module_id}]</p></div>`;
     }
 
+    // STRICT COLOR CONSISTENCY APPLIED HERE
     function getTaskTargetText(study, task_id) {
         if (study === 'AI') {
             if (task_id === 'T1') return `In this task, your target is any AI-generated face that makes you feel <span class="target-word">good, warm, or friendly</span>.`;
@@ -176,7 +170,7 @@
                 if (row.module_id === 'M2') context_css = "context-inperson";
                 else if (row.module_id === 'M3') context_css = "context-online";
             } else if (study_condition === 'AI' && row.module_id === 'M2') {
-                context_css = "context-online"; // AI agents are inherently online
+                context_css = "context-online"; 
             }
 
             let is_new_module = (row.module_id !== current_module);
@@ -219,17 +213,20 @@
                 current_task = row.task_id;
                 current_block = row.block_id;
 
-                // A. Instructions (Slide 1 & 2)
-                let instruction_pages = {
-                    type: jsPsychInstructions,
-                    pages: [
-                        `<div class="instruction-box"><h2 style="text-align:center;">Part ${seq_task}</h2><p>${getTaskTargetText(study_condition, current_task)}</p><br><p>Please decide whether each face is a target.</p><p style="text-align:right; font-size:14px; color:#555;">[${current_module} | ${current_task}]</p></div>`,
-                        `<div class="instruction-box"><p>On each trial, you will receive social feedback indicating how many other participants agreed with your decision.</p></div>`
-                    ],
-                    show_clickable_nav: true
+                // A. Instructions (Using Button Response to force clean DOM)
+                let inst_1 = {
+                    type: jsPsychHtmlButtonResponse,
+                    stimulus: `<div class="instruction-box"><h2 style="text-align:center;">Part ${seq_task}</h2><p>${getTaskTargetText(study_condition, current_task)}</p><br><p>Please decide whether each face is a target.</p><p style="text-align:right; font-size:14px; color:#555;">[${current_module} | ${current_task}]</p></div>`,
+                    choices: ['Next']
                 };
 
-                // B. Comprehension Quiz (Slide 3)
+                let inst_2 = {
+                    type: jsPsychHtmlButtonResponse,
+                    stimulus: `<div class="instruction-box"><p>On each trial, you will receive social feedback indicating how many other participants agreed with your decision.</p></div>`,
+                    choices: ['Continue to Comprehension Check']
+                };
+
+                // B. Comprehension Quiz
                 let q_prompts = [];
                 let correct_answers = [];
                 
@@ -258,7 +255,7 @@
                     }
                 };
 
-                // C. Error Screen (Flattened to prevent overlap bugs)
+                // C. Error Screen (with conditional logic to only show if failed)
                 let error_screen = {
                     type: jsPsychHtmlButtonResponse,
                     stimulus: `<div class="instruction-box" style="text-align:center;"><h2>Incorrect</h2><p>One or more of your answers were incorrect.</p><p>You will now be sent back to re-read the instructions.</p></div>`,
@@ -269,12 +266,12 @@
                     }
                 };
 
-                // D. The Bulletproof Loop
+                // D. The FLATTENED Bulletproof Loop
                 timeline.push({
-                    timeline: [instruction_pages, check_screen, error_screen],
+                    timeline: [inst_1, inst_2, check_screen, error_screen],
                     loop_function: function(data) {
                         let last_quiz = data.filter({trial_type: 'survey-multi-choice'}).last(1).values()[0];
-                        return last_quiz.passed === false; // If false, loop repeats
+                        return last_quiz.passed === false; // If false, loop repeats from inst_1
                     }
                 });
 
@@ -285,7 +282,7 @@
                     choices: ['Continue']
                 });
 
-                // F. Icon Intro Screen (Only triggers if there is a background watermark)
+                // F. Icon Intro Screen
                 timeline.push({
                     type: jsPsychHtmlButtonResponse,
                     stimulus: function() {
