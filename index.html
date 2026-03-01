@@ -4,11 +4,11 @@
     <title>VH Social Perception Study</title>
     
     <script src="https://unpkg.com/jspsych@7.3.4"></script>
-    <script src="https://unpkg.com/@jspsych/plugin-html-keyboard-response"></script>
-    <script src="https://unpkg.com/@jspsych/plugin-html-button-response"></script>
-    <script src="https://unpkg.com/@jspsych/plugin-survey-multi-choice"></script>
-    <script src="https://unpkg.com/@jspsych/plugin-preload"></script>
-    <script src="https://unpkg.com/@jspsych/plugin-fullscreen"></script>
+    <script src="https://unpkg.com/@jspsych/plugin-html-keyboard-response@1.1.3"></script>
+    <script src="https://unpkg.com/@jspsych/plugin-html-button-response@1.1.3"></script>
+    <script src="https://unpkg.com/@jspsych/plugin-survey-multi-choice@1.1.3"></script>
+    <script src="https://unpkg.com/@jspsych/plugin-preload@1.1.3"></script>
+    <script src="https://unpkg.com/@jspsych/plugin-fullscreen@1.1.2"></script>
     <link href="https://unpkg.com/jspsych@7.3.4/css/jspsych.css" rel="stylesheet" type="text/css" />
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
@@ -21,7 +21,7 @@
         --bg-inperson: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23222222'%3E%3Cpath d='M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z'/%3E%3C/svg%3E");
       }
 
-      /* Dark Background & Core Styling (Removed strict height limits to prevent DOM stacking bugs) */
+      /* Dark Background & Core Styling */
       body { background-color: #1a1a1a; color: #ffffff; font-family: 'Arial', sans-serif; }
       
       /* Wrapper to lock content and background watermark dead center */
@@ -34,9 +34,8 @@
       .context-online { background-image: var(--bg-online); background-repeat: no-repeat; background-size: 400px; background-position: center; }
       .context-inperson { background-image: var(--bg-inperson); background-repeat: no-repeat; background-size: 400px; background-position: center; }
 
-      /* Target Keywords Styling (STRICTLY CONSISTENT) */
+      /* Target Keywords Styling (STRICTLY CONSISTENT - Cyan Only) */
       .target-word { color: #00ffcc; font-weight: bold; font-size: 24px; }
-      .avoid-word { color: #ff5555; font-weight: bold; font-size: 24px; }
       
       /* Feedback Styles */
       .feedback-number { font-size: 80px; font-weight: bold; color: #ffffff; line-height: 1; margin-bottom: 5px; z-index: 20; position: relative;}
@@ -98,20 +97,20 @@
         return `<div class="instruction-box"><h2 style="text-align:center;">Section ${seq_num}</h2><p>${text}</p><p style="text-align:right; font-size:14px; color:#555;">[${module_id}]</p></div>`;
     }
 
-    // STRICT COLOR CONSISTENCY APPLIED HERE
+    // STRICT COLOR CONSISTENCY APPLIED HERE (Only .target-word is used)
     function getTaskTargetText(study, task_id) {
         if (study === 'AI') {
             if (task_id === 'T1') return `In this task, your target is any AI-generated face that makes you feel <span class="target-word">good, warm, or friendly</span>.`;
-            if (task_id === 'T2') return `In this task, your target is any AI-generated face that makes you feel <span class="avoid-word">bad, uneasy, or threatened</span>.`;
+            if (task_id === 'T2') return `In this task, your target is any AI-generated face that makes you feel <span class="target-word">bad, uneasy, or threatened</span>.`;
             if (task_id === 'T5') return `For this task, targets are any AI-agent you would <span class="target-word">like to interact or team up with</span> for your VH sessions.`;
-            if (task_id === 'T6') return `For this task, targets are any AI-agent you would <span class="avoid-word">avoid interacting or teaming up with</span> for your VH sessions.`;
+            if (task_id === 'T6') return `For this task, targets are any AI-agent you would <span class="target-word">avoid interacting or teaming up with</span> for your VH sessions.`;
         } else {
             if (task_id === 'T1') return `In this task, your target is any face that makes you feel <span class="target-word">good, warm, or friendly</span>.`;
-            if (task_id === 'T2') return `In this task, your target is any face that makes you feel <span class="avoid-word">bad, uneasy, or threatened</span>.`;
+            if (task_id === 'T2') return `In this task, your target is any face that makes you feel <span class="target-word">bad, uneasy, or threatened</span>.`;
             if (task_id === 'T3') return `For this task, targets are any individuals you would <span class="target-word">like to interact or team up with</span> for your VH sessions.`;
-            if (task_id === 'T4') return `For this task, targets are any individuals you would <span class="avoid-word">avoid interacting or teaming up with</span> for your VH sessions.`;
+            if (task_id === 'T4') return `For this task, targets are any individuals you would <span class="target-word">avoid interacting or teaming up with</span> for your VH sessions.`;
             if (task_id === 'T5') return `For this task, targets are any individuals you would <span class="target-word">like to interact or team up with</span> for your VH sessions.`;
-            if (task_id === 'T6') return `For this task, targets are any individuals you would <span class="avoid-word">avoid interacting or teaming up with</span> for your VH sessions.`;
+            if (task_id === 'T6') return `For this task, targets are any individuals you would <span class="target-word">avoid interacting or teaming up with</span> for your VH sessions.`;
         }
         return "Please follow the instructions carefully.";
     }
@@ -213,7 +212,7 @@
                 current_task = row.task_id;
                 current_block = row.block_id;
 
-                // A. Instructions (Using Button Response to force clean DOM)
+                // A. Instructions 
                 let inst_1 = {
                     type: jsPsychHtmlButtonResponse,
                     stimulus: `<div class="instruction-box"><h2 style="text-align:center;">Part ${seq_task}</h2><p>${getTaskTargetText(study_condition, current_task)}</p><br><p>Please decide whether each face is a target.</p><p style="text-align:right; font-size:14px; color:#555;">[${current_module} | ${current_task}]</p></div>`,
@@ -226,7 +225,7 @@
                     choices: ['Continue to Comprehension Check']
                 };
 
-                // B. Comprehension Quiz
+                // B. Comprehension Quiz 
                 let q_prompts = [];
                 let correct_answers = [];
                 
@@ -255,10 +254,10 @@
                     }
                 };
 
-                // C. Error Screen (with conditional logic to only show if failed)
+                // C. Error Screen
                 let error_screen = {
                     type: jsPsychHtmlButtonResponse,
-                    stimulus: `<div class="instruction-box" style="text-align:center;"><h2>Incorrect</h2><p>One or more of your answers were incorrect.</p><p>You will now be sent back to re-read the instructions.</p></div>`,
+                    stimulus: `<div class="instruction-box" style="text-align:center; color:#ff5555;"><h2>Incorrect</h2><p>One or more of your answers were incorrect.</p><p>You will now be sent back to re-read the instructions.</p></div>`,
                     choices: ['Go Back'],
                     conditional_function: function() {
                         let last_trial = jsPsych.data.get().last(1).values()[0];
@@ -266,7 +265,7 @@
                     }
                 };
 
-                // D. The FLATTENED Bulletproof Loop
+                // D. The Flat Loop
                 timeline.push({
                     timeline: [inst_1, inst_2, check_screen, error_screen],
                     loop_function: function(data) {
@@ -282,26 +281,28 @@
                     choices: ['Continue']
                 });
 
-                // F. Icon Intro Screen
-                timeline.push({
-                    type: jsPsychHtmlButtonResponse,
-                    stimulus: function() {
-                        if (context_css !== "") {
-                            let icon_desc = context_css === "context-inperson" ? "an In-Person event" : "an Online event";
-                            let var_name = context_css === "context-inperson" ? "inperson" : "online";
-                            return `
-                            <div class="instruction-box" style="text-align:center;">
-                                <h2>Context Watermark</h2>
-                                <p>During the following trials, a watermark will appear in the center of the background.</p>
-                                <div style="width: 200px; height: 200px; margin: 30px auto; background-image: var(--bg-${var_name}); background-size: contain; background-repeat: no-repeat; background-position: center;"></div>
-                                <p>This indicates that the Vibe Hang session will happen <strong>${icon_desc}</strong>.</p>
-                            </div>`;
-                        } else {
-                            return `<div class="instruction-box" style="text-align:center;"><h2>Practice Trials</h2><p>You will now complete 5 practice trials.</p></div>`;
-                        }
-                    },
-                    choices: ['Begin Practice']
-                });
+                // F. Icon Intro Screen OR Basic Practice Intro
+                if (context_css !== "") {
+                    let icon_desc = context_css === "context-inperson" ? "an In-Person event" : "an Online event";
+                    let var_name = context_css === "context-inperson" ? "inperson" : "online";
+                    timeline.push({
+                        type: jsPsychHtmlButtonResponse,
+                        stimulus: `
+                        <div class="instruction-box" style="text-align:center;">
+                            <h2>Context Watermark</h2>
+                            <p>During the following trials, an icon will appear in the center of the background.</p>
+                            <div style="width: 200px; height: 200px; margin: 30px auto; background-image: var(--bg-${var_name}); background-size: contain; background-repeat: no-repeat; background-position: center;"></div>
+                            <p>This icon indicates that the Vibe Hang session will happen <strong>${icon_desc}</strong>.</p>
+                        </div>`,
+                        choices: ['Begin Practice']
+                    });
+                } else {
+                    timeline.push({
+                        type: jsPsychHtmlButtonResponse,
+                        stimulus: `<div class="instruction-box" style="text-align:center;"><h2>Practice Trials</h2><p>You will now complete 5 practice trials.</p></div>`,
+                        choices: ['Begin Practice']
+                    });
+                }
 
                 // G. Automated Practice Extraction
                 let practice_rows = csv_data.filter(r => r.task_id === current_task).slice(0, 5);
