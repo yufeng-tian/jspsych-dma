@@ -21,22 +21,27 @@
         --bg-inperson: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%233a3a3a'%3E%3Cpath d='M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z'/%3E%3C/svg%3E");
       }
 
+      /* ABSOLUTE SCROLLBAR NUKE */
       html, body { background-color: #1a1a1a; color: #ffffff; font-family: 'Arial', sans-serif; margin: 0; padding: 0; height: 100%; width: 100%; overflow: hidden; }
       
+      /* Fixed Watermark Classes */
       .context-online { background-image: var(--bg-online); background-repeat: no-repeat; background-size: contain; background-position: center; }
       .context-inperson { background-image: var(--bg-inperson); background-repeat: no-repeat; background-size: contain; background-position: center; }
 
+      /* Strict Target Colors */
       .target-word { color: #00ffcc; font-weight: bold; font-size: 24px; }
       .avoid-word { color: #ff5555; font-weight: bold; font-size: 24px; }
       
       .feedback-number { font-size: 80px; font-weight: bold; color: #ffffff; line-height: 1; margin-bottom: 5px; position: relative; z-index: 20;}
       .feedback-label { font-size: 24px; color: #cccccc; margin-top: 0px; position: relative; z-index: 20;}
       
+      /* Stimulus Box */
       .stimulus-container { position: relative; display: inline-block; z-index: 10; }
       .stimulus-image { max-height: 500px; max-width: 500px; border: 2px solid #333; border-radius: 8px; display: block; }
       .practice-banner { position: absolute; top: -40px; left: 50%; transform: translateX(-50%); background-color: #ffffff; color: #000; padding: 5px 20px; font-weight: bold; font-size: 20px; border-radius: 5px; letter-spacing: 2px; white-space: nowrap; }
 
       .instruction-box { text-align: left; max-width: 800px; margin: auto; line-height: 1.6; font-size: 22px; padding: 20px; position: relative; z-index: 10;}
+      
       .progress-tracker { position: fixed; top: 15px; right: 20px; font-size: 16px; color: #555; font-weight: bold; z-index: 30;}
       
       .jspsych-survey-multi-choice-question { text-align: left; margin-bottom: 30px; font-size: 20px;}
@@ -119,12 +124,13 @@
         return "Please follow the instructions carefully.";
     }
 
-    function calculateFeedback(is_target, response_key, intensity) {
-        let raw_int = String(intensity || 'neutral').trim().toLowerCase();
+    // Upgraded calculateFeedback logic with full Filename Debugging
+    function calculateFeedback(is_target, response_key, intensity, stimulus_url) {
+        let raw_int = String(intensity || 'MISSING_COL').trim().toLowerCase();
         let resp = String(response_key || '').trim().toLowerCase();
+        let base_file = String(stimulus_url || '').split('/').pop();
         
         let is_correct = false;
-        // Strictly checks the key press and logic
         if (String(is_target).trim() === '1' && resp === 't') is_correct = true;
         if (String(is_target).trim() === '0' && (resp === ' ' || resp === 'space' || resp === 'spacebar' || resp === '')) is_correct = true;
         
@@ -132,21 +138,20 @@
         if (is_correct) {
             if (raw_int.includes('clear')) { min = 90; max = 98; }
             else if (raw_int.includes('subtle')) { min = 70; max = 80; }
-            else { min = 55; max = 65; } // Neutral
+            else { min = 55; max = 65; } // Neutral or Missing
         } else { 
             if (raw_int.includes('clear')) { min = 2; max = 10; }
             else if (raw_int.includes('subtle')) { min = 20; max = 30; }
-            else { min = 35; max = 45; } // Neutral
+            else { min = 35; max = 45; } // Neutral or Missing
         }
         
         let percent = Math.floor(Math.random() * (max - min + 1)) + min;
         
-        // ADDED LIVE DEBUG BOX: This prints the exact variables the computer is reading
         return `
             <div class="feedback-number">${percent}%</div>
             <div class="feedback-label">of others agree with you</div>
             <div style="margin-top: 40px; font-size: 14px; color: #ffaa00; border: 1px solid #ffaa00; padding: 5px;">
-                [DEBUG BOX] Target: ${is_target} | Pressed: '${resp}' | Correct: ${is_correct} | Intensity Found: '${raw_int}'
+                [DEBUG] File: ${base_file} | Target: ${is_target} | Key: '${resp}' | Int Col: '${raw_int}'
             </div>
         `;
     }
@@ -181,28 +186,31 @@
             // FUZZY MATCHER: Hunts for columns even if they have hidden typos or invisible spaces
             results.data.forEach(row => {
                 let keys = Object.keys(row);
-                let stim_key = keys.find(k => k.toLowerCase().includes('stimulus'));
-                let int_key = keys.find(k => k.toLowerCase().includes('intensity'));
-                let tar_key = keys.find(k => k.toLowerCase().includes('target'));
-                let task_key = keys.find(k => k.toLowerCase().includes('task'));
-                let mod_key = keys.find(k => k.toLowerCase().includes('module'));
-                let block_key = keys.find(k => k.toLowerCase().includes('block'));
                 
-                if (stim_key && row[stim_key]) {
+                let stim_k = keys.find(k => String(k).toLowerCase().includes('stim'));
+                let int_k = keys.find(k => String(k).toLowerCase().includes('intens'));
+                let tar_k = keys.find(k => String(k).toLowerCase().includes('targ'));
+                let task_k = keys.find(k => String(k).toLowerCase().includes('task'));
+                let mod_k = keys.find(k => String(k).toLowerCase().includes('mod'));
+                let block_k = keys.find(k => String(k).toLowerCase().includes('block'));
+                
+                if (stim_k && row[stim_k]) {
                     let clean_row = {
-                        stimulus: String(row[stim_key]).trim(),
-                        intensity: int_key ? String(row[int_key]).trim().toLowerCase() : 'neutral',
-                        is_target: tar_key ? String(row[tar_key]).trim() : '0',
-                        task_id: task_key ? String(row[task_key]).trim() : '',
-                        module_id: mod_key ? String(row[mod_key]).trim() : '',
-                        block_id: block_key ? String(row[block_key]).trim() : ''
+                        stimulus: String(row[stim_k]).trim(),
+                        // If it can't find intensity, it will print MISSING_COL to the debug box!
+                        intensity: int_k ? String(row[int_k]).trim().toLowerCase() : 'MISSING_COL',
+                        is_target: tar_k ? String(row[tar_k]).trim() : '0',
+                        task_id: task_k ? String(row[task_k]).trim() : '',
+                        module_id: mod_k ? String(row[mod_k]).trim() : '',
+                        block_id: block_k ? String(row[block_k]).trim() : ''
                     };
                     
-                    // Force Neutral Logic for "o" filenames (per your master instructions)
+                    // Safety Rule: Only override intensity if the exact letter 'o' is in the filename
                     let base_file = clean_row.stimulus.split('/').pop();
                     if (base_file.includes('o')) {
                         clean_row.intensity = 'neutral';
                     }
+                    
                     clean_data.push(clean_row);
                 }
             });
@@ -406,7 +414,7 @@
                         type: jsPsychHtmlKeyboardResponse,
                         stimulus: w_mark + `<div class="stimulus-container"><div class="practice-banner">PRACTICE</div><img src="${p_row.stimulus}" class="stimulus-image"></div>`,
                         choices: ['t', ' '], data: { is_practice: true, task_id: p_row.task_id },
-                        on_finish: function(data) { data.feedback_html = w_mark + `<div class="stimulus-container"><div class="practice-banner">PRACTICE</div>${calculateFeedback(p_row.is_target, data.response, p_row.intensity)}</div>`; }
+                        on_finish: function(data) { data.feedback_html = w_mark + `<div class="stimulus-container"><div class="practice-banner">PRACTICE</div>${calculateFeedback(p_row.is_target, data.response, p_row.intensity, p_row.stimulus)}</div>`; }
                     });
                     timeline.push({ type: jsPsychHtmlKeyboardResponse, stimulus: function() { return jsPsych.data.get().last(1).values()[0].feedback_html; }, choices: "NO_KEYS", trial_duration: 1500 });
                 });
@@ -440,7 +448,7 @@
                 stimulus: w_mark + progress_html + `<div class="stimulus-container"><img src="${row.stimulus}" class="stimulus-image"></div>`,
                 choices: ['t', ' '], 
                 data: { is_practice: false, task_id: row.task_id, module_id: row.module_id, block_id: row.block_id, is_target: row.is_target, intensity: row.intensity, condition: study_condition },
-                on_finish: function(data) { data.feedback_html = w_mark + progress_html + `<div class="stimulus-container">${calculateFeedback(data.is_target, data.response, data.intensity)}</div>`; }
+                on_finish: function(data) { data.feedback_html = w_mark + progress_html + `<div class="stimulus-container">${calculateFeedback(data.is_target, data.response, data.intensity, row.stimulus)}</div>`; }
             });
 
             timeline.push({ type: jsPsychHtmlKeyboardResponse, stimulus: function() { return jsPsych.data.get().last(1).values()[0].feedback_html; }, choices: "NO_KEYS", trial_duration: 1500 });
