@@ -58,11 +58,14 @@
 
     const jsPsych = initJsPsych({
         on_finish: function() {
+            // ---> STEP 1: PASTE YOUR DATAPIPE ID HERE <---
             const experiment_id = "YOUR_DATAPIPE_ID_HERE"; 
+            
             const filename = `subject_${subject_id}_data.csv`;
             const data_to_save = jsPsych.data.get().csv();
             
             jsPsychPipe.saveData(experiment_id, filename, data_to_save).then(function() {
+                // ---> STEP 2: PASTE YOUR QUALTRICS SURVEY LINK HERE <---
                 const qualtrics_url = "https://yourschool.qualtrics.com/jfe/form/SV_123456789";
                 window.location.href = `${qualtrics_url}?PROLIFIC_PID=${subject_id}&condition=${study_condition}`;
             });
@@ -130,11 +133,11 @@
         if (is_correct) {
             if (filename_intensity === 'clear') { min = 90; max = 98; }
             else if (filename_intensity === 'subtle') { min = 70; max = 80; }
-            else { min = 55; max = 65; } // Neutral
+            else { min = 55; max = 65; } 
         } else { 
             if (filename_intensity === 'clear') { min = 2; max = 10; }
             else if (filename_intensity === 'subtle') { min = 20; max = 30; }
-            else { min = 35; max = 45; } // Neutral
+            else { min = 35; max = 45; } 
         }
         
         let percent = Math.floor(Math.random() * (max - min + 1)) + min;
@@ -142,9 +145,6 @@
         return `
             <div class="feedback-number">${percent}%</div>
             <div class="feedback-label">of others agree with you</div>
-            <div style="margin-top: 40px; font-size: 14px; color: #ffaa00; border: 1px solid #ffaa00; padding: 5px;">
-                [DEBUG BOX] Target: ${is_target} | Pressed: '${resp}' | Correct: ${is_correct} | Extracted Intensity: '${filename_intensity}'
-            </div>
         `;
     }
 
@@ -185,11 +185,9 @@
                 
                 if (stim_k && row[stim_k]) {
                     let stimulus_val = String(row[stim_k]).trim();
-                    
-                    // THE GENIUS WORKAROUND: Extracting intensity purely from the filename's prefix!
-                    let base_file = stimulus_val.split('/').pop();       // e.g., "fhc_S014_005.jpg"
-                    let prefix = base_file.split('_')[0].toLowerCase();  // e.g., "fhc"
-                    let intensity_char = prefix.slice(-1);               // e.g., "c"
+                    let base_file = stimulus_val.split('/').pop();       
+                    let prefix = base_file.split('_')[0].toLowerCase();  
+                    let intensity_char = prefix.slice(-1);               
                     
                     let derived_intensity = 'neutral';
                     if (intensity_char === 'c') derived_intensity = 'clear';
@@ -197,7 +195,7 @@
                     
                     let clean_row = {
                         stimulus: stimulus_val,
-                        intensity: derived_intensity, // 100% accurate, completely ignores CSV corruption
+                        intensity: derived_intensity, 
                         is_target: tar_k ? String(row[tar_k]).trim() : '0',
                         task_id: task_k ? String(row[task_k]).trim() : '',
                         module_id: mod_k ? String(row[mod_k]).trim() : '',
@@ -256,7 +254,6 @@
 
             let current_percent = Math.round((trial_counter / total_real_trials) * 100) || 0;
 
-            // 1. MODULE LEVEL PAUSE & INTRO
             if (is_new_module) {
                 if (current_module !== null) {
                     timeline.push({
@@ -290,7 +287,6 @@
                 }
             } 
             
-            // 2. TASK LEVEL PAUSE
             else if (is_new_task) {
                 timeline.push({
                     type: jsPsychHtmlKeyboardResponse,
@@ -299,7 +295,6 @@
                 });
             }
 
-            // --- TASK INSTRUCTION, QUIZ & PRACTICE ---
             if (is_new_task) {
                 current_task = row.task_id;
                 current_block = row.block_id;
@@ -407,7 +402,7 @@
                         type: jsPsychHtmlKeyboardResponse,
                         stimulus: w_mark + `<div class="stimulus-container"><div class="practice-banner">PRACTICE</div><img src="${p_row.stimulus}" class="stimulus-image"></div>`,
                         choices: ['t', ' '], data: { is_practice: true, task_id: p_row.task_id },
-                        on_finish: function(data) { data.feedback_html = w_mark + `<div class="stimulus-container"><div class="practice-banner">PRACTICE</div>${calculateFeedback(p_row.is_target, data.response, p_row.intensity)}</div>`; }
+                        on_finish: function(data) { data.feedback_html = w_mark + `<div class="stimulus-container"><div class="practice-banner">PRACTICE</div>${calculateFeedback(p_row.is_target, data.response, p_row.intensity, p_row.stimulus)}</div>`; }
                     });
                     timeline.push({ type: jsPsychHtmlKeyboardResponse, stimulus: function() { return jsPsych.data.get().last(1).values()[0].feedback_html; }, choices: "NO_KEYS", trial_duration: 1500 });
                 });
@@ -419,7 +414,6 @@
                 });
             }
 
-            // 3. BLOCK LEVEL PAUSE
             if (is_new_block && !is_new_task && !is_new_module) {
                 timeline.push({
                     type: jsPsychHtmlKeyboardResponse,
@@ -429,7 +423,6 @@
                 current_block = row.block_id;
             }
 
-            // 4. THE REAL TRIAL
             trial_counter++; 
             let progress_html = `<div class="progress-tracker">Section ${seq_module} | Part ${seq_task} | Block ${seq_block}</div>`;
             let w_mark = getWatermark(context_css);
@@ -441,13 +434,12 @@
                 stimulus: w_mark + progress_html + `<div class="stimulus-container"><img src="${row.stimulus}" class="stimulus-image"></div>`,
                 choices: ['t', ' '], 
                 data: { is_practice: false, task_id: row.task_id, module_id: row.module_id, block_id: row.block_id, is_target: row.is_target, intensity: row.intensity, condition: study_condition },
-                on_finish: function(data) { data.feedback_html = w_mark + progress_html + `<div class="stimulus-container">${calculateFeedback(data.is_target, data.response, data.intensity)}</div>`; }
+                on_finish: function(data) { data.feedback_html = w_mark + progress_html + `<div class="stimulus-container">${calculateFeedback(data.is_target, data.response, data.intensity, row.stimulus)}</div>`; }
             });
 
             timeline.push({ type: jsPsychHtmlKeyboardResponse, stimulus: function() { return jsPsych.data.get().last(1).values()[0].feedback_html; }, choices: "NO_KEYS", trial_duration: 1500 });
         });
 
-        // 5. End Redirect
         timeline.push({
             type: jsPsychHtmlKeyboardResponse,
             stimulus: `<div class="instruction-box" style="text-align:center;"><h2>Experiment Complete</h2>${getProgressBar(100)}<p>Saving data to secure server...</p><p style="color:#888; font-size:16px;">(Note: This screen will hold until the DataPipe upload is successful, after which you will be redirected to the final survey.)</p></div>`,
