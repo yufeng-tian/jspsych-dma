@@ -51,7 +51,18 @@
   </head>
   <body></body>
   <script>
-    
+
+    // GLOBAL CRASH CATCHER: If anything breaks, it prints the error to the screen
+    window.onerror = function(msg, url, lineNo) {
+        document.body.innerHTML = `<div style="background-color:#1a1a1a; color:#ff5555; padding:40px; text-align:center; font-family:Arial; height:100vh; width:100vw;">
+            <h2>System Crash Detected</h2>
+            <p><strong>${msg}</strong></p>
+            <p>Line: ${lineNo}</p>
+            <p>Please take a screenshot of this page and share it.</p>
+        </div>`;
+        return false;
+    };
+
     /* =========================================================
        BLOCK 1: INITIALIZATION & DATAPIPE
        ========================================================= */
@@ -122,19 +133,24 @@
     }
 
     function calculateFeedback(is_target, response_key, intensity) {
-        const clean_intensity = String(intensity).trim().toLowerCase();
-        let resp = String(response_key).toLowerCase();
-        let is_correct = ((is_target == 1 && resp === 't') || (is_target == 0 && resp === ' '));
+        // Highly fault-tolerant sanitization of data inputs
+        const clean_intensity = String(intensity || '').trim().toLowerCase();
+        let resp = String(response_key || '').trim().toLowerCase();
+        
+        // Evaluates correct answers (handles string, integer, space, or T)
+        let is_correct = false;
+        if (String(is_target).trim() === '1' && resp === 't') is_correct = true;
+        if (String(is_target).trim() === '0' && (resp === ' ' || resp === 'space' || resp === 'spacebar' || resp === '')) is_correct = true;
         
         let min, max;
         if (is_correct) {
             if (clean_intensity === 'clear') { min = 90; max = 98; }
             else if (clean_intensity === 'subtle') { min = 70; max = 80; }
-            else { min = 55; max = 65; } // Neutral Fallback
+            else { min = 55; max = 65; } // Default/Neutral
         } else { 
             if (clean_intensity === 'clear') { min = 2; max = 10; }
             else if (clean_intensity === 'subtle') { min = 20; max = 30; }
-            else { min = 35; max = 45; } // Neutral Fallback
+            else { min = 35; max = 45; } // Default/Neutral
         }
         return `<div class="feedback-number">${Math.floor(Math.random() * (max - min + 1)) + min}%</div><div class="feedback-label">of others agree with you</div>`;
     }
@@ -153,33 +169,49 @@
        BLOCK 3: HIERARCHICAL TIMELINE BUILDER
        ========================================================= */
     Papa.parse(list_path, {
-        download: true, header: true, dynamicTyping: true, skipEmptyLines: true,
+        download: true, 
+        header: true, 
+        dynamicTyping: true, 
+        skipEmptyLines: true,
+        // NATIVE PAPAPARSE SANITIZER: Safely trims invisible BOMs from headers
+        transformHeader: function(header) {
+            return header.trim().toLowerCase().replace(/[^a-z0-9_]/g, '');
+        },
         complete: function(results) { 
             
-            // BULLETPROOF REGEX SANITIZER
-            // Eradicates Excel BOM characters and normalizes all CSV headers safely.
+            // Ensures we didn't get a 404 HTML page instead of a CSV
+            if (!results || !results.data || results.data.length === 0) {
+                document.body.innerHTML = `<div style='color:#ff5555; text-align:center; padding:50px;'><h2>File Not Found Error</h2><p>Could not load CSV: ${list_path}</p><p>Please check your GitHub repository to ensure the file exists and the filename is exact.</p></div>`;
+                return;
+            }
+
             const clean_data = [];
             results.data.forEach(row => {
-                let clean_row = {};
-                for (let key in row) {
-                    if (row.hasOwnProperty(key) && key) {
-                        let clean_key = key.toLowerCase().replace(/[^a-z0-9_]/g, '');
-                        clean_row[clean_key] = typeof row[key] === 'string' ? row[key].trim() : row[key];
+                if (row.stimulus) {
+                    // Normalize the intensity cell
+                    if (row.intensity && typeof row.intensity === 'string') {
+                        row.intensity = row.intensity.trim().toLowerCase();
                     }
-                }
-                
-                // Silent Logic enforcement: Auto-tag 'o' filenames as neutral intensity
-                if (clean_row.stimulus) {
-                    let base_file = String(clean_row.stimulus).split('/').pop();
+                    
+                    // Force Neutral Logic for "o" filenames
+                    let base_file = String(row.stimulus).split('/').pop();
                     if (base_file.includes('o')) {
-                        clean_row.expression = 'neutral';
-                        clean_row.intensity = 'neutral';
+                        row.expression = 'neutral';
+                        row.intensity = 'neutral';
                     }
-                    clean_data.push(clean_row);
+                    clean_data.push(row);
                 }
             });
 
+            if (clean_data.length === 0) {
+                document.body.innerHTML = `<div style='color:#ff5555; text-align:center; padding:50px;'><h2>Data Error</h2><p>File loaded, but no valid stimuli were found.</p></div>`;
+                return;
+            }
+
             buildExperiment(clean_data); 
+        },
+        error: function(err) {
+             document.body.innerHTML = `<div style='color:#ff5555; text-align:center; padding:50px;'><h2>Network Error</h2><p>${err}</p></div>`;
         }
     });
 
@@ -192,8 +224,10 @@
             button_label: "Enter Fullscreen"
         });
 
-        const total_real_trials = csv_data.length; 
-        const image_array = csv_data.map(row => row.stimulus);
+        const valid_rows = csv_data.filter(r => r.stimulus);
+        const total_real_trials = valid_rows.length; 
+        
+        const image_array = valid_rows.map(row => row.stimulus);
         timeline.push({ type: jsPsychPreload, images: image_array, message: "Loading visual assets..." });
 
         let current_module = null;
@@ -205,7 +239,7 @@
         let seq_block = 0;
         let trial_counter = 0; 
 
-        csv_data.forEach((row) => {
+        valid_rows.forEach((row) => {
             let context_css = "";
             if (study_condition === 'Human') {
                 if (row.module_id === 'M2') context_css = "context-inperson";
