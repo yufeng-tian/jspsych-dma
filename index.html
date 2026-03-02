@@ -42,6 +42,10 @@
       .jspsych-survey-multi-choice-question { text-align: left; margin-bottom: 30px; font-size: 20px;}
       .jspsych-survey-multi-choice-option { margin-bottom: 10px; }
       .jspsych-btn { font-size: 18px; padding: 10px 20px; margin-top: 20px;}
+      
+      /* Aligned Key Mapping Table Styles */
+      .key-mapping-table { margin: 40px auto; font-size: 32px; font-weight: bold; text-align: left; border-collapse: separate; border-spacing: 0 15px;}
+      .key-col { padding-right: 20px; text-align: right; }
     </style>
   </head>
   <body></body>
@@ -58,14 +62,12 @@
 
     const jsPsych = initJsPsych({
         on_finish: function() {
-            // ---> STEP 1: PASTE YOUR DATAPIPE ID HERE <---
             const experiment_id = "YOUR_DATAPIPE_ID_HERE"; 
             
             const filename = `subject_${subject_id}_data.csv`;
             const data_to_save = jsPsych.data.get().csv();
             
             jsPsychPipe.saveData(experiment_id, filename, data_to_save).then(function() {
-                // ---> STEP 2: PASTE YOUR QUALTRICS SURVEY LINK HERE <---
                 const qualtrics_url = "https://yourschool.qualtrics.com/jfe/form/SV_123456789";
                 window.location.href = `${qualtrics_url}?PROLIFIC_PID=${subject_id}&condition=${study_condition}`;
             });
@@ -79,6 +81,16 @@
 
     jsPsych.data.addProperties({ subject_id: subject_id, condition: study_condition, list_used: list_path });
 
+    function shuffleArray(array) {
+        let currentIndex = array.length, randomIndex;
+        while (currentIndex != 0) {
+            randomIndex = Math.floor(Math.random() * currentIndex);
+            currentIndex--;
+            [array[currentIndex], array[randomIndex]] = [array[randomIndex], array[currentIndex]];
+        }
+        return array;
+    }
+
     function getWatermark(context) {
         if (!context) return "";
         return `<div class="${context}" style="position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 400px; height: 400px; z-index: 0; pointer-events: none;"></div>`;
@@ -88,8 +100,8 @@
         let text = "";
         if (study === 'Human') {
             if (module_id.includes('1')) text = "In this module, you will view a series of sequentially presented photos.<br><br>Please follow the instructions provided at the start of each section.";
-            else if (module_id.includes('2')) text = "In this module, you will view photos of other VH participants who, based on the ZIP code you provided in the prescreening survey, live within approximately 30 minutes of your location.<br><br>These participants will attend <span class='target-word'>in-person VH events</span>.<br><br>Each section includes its own instructions; please read them carefully before you begin.";
-            else if (module_id.includes('3')) text = "In this module, you will view photos of VH participants who live all across the United States.<br><br>These participants will attend <span class='target-word'>online VH events</span>.<br><br>Each section includes its own instructions; please read them carefully before you begin.";
+            else if (module_id.includes('2')) text = "In this module, you will view photos of other VH participants who, based on the ZIP code you provided in the prescreening survey, live within approximately 30 minutes of your location.<br><br>These participants will attend <strong>in-person VH events</strong>.<br><br>Each section includes its own instructions; please read them carefully before you begin.";
+            else if (module_id.includes('3')) text = "In this module, you will view photos of VH participants who live all across the United States.<br><br>These participants will attend <strong>online VH events</strong>.<br><br>Each section includes its own instructions; please read them carefully before you begin.";
         } else if (study === 'AI') {
             if (module_id.includes('1')) text = "In this module, you will view a series of sequentially presented AI-generated profiles.<br><br>These digital agents were automatically synthesized from 'oceans' of unfiltered social data across platforms such as Discord, YouTube, and Facebook.<br><br>Please follow the instructions provided at the start of each section.";
             else if (module_id.includes('2')) text = "In this module, you will view digital profiles generated through an algorithmic synthesis of raw social data from across the United States.<br><br>Because these AI agents were trained on unfiltered online interactions, they reflect the full spectrum of human behavior.<br><br>Think of these proxies as digital mirrors of real-world social dynamics; their temperaments are intentionally unpredictable.<br><br>Each section includes its own instructions. Please read them carefully before you begin.";
@@ -97,27 +109,28 @@
         return `<div class="instruction-box"><h2 style="text-align:center;">Section ${seq_num}</h2><p>${text}</p><p style="text-align:right; font-size:14px; color:#555;">[${module_id}]</p></div>`;
     }
 
-    function getTaskFormula(task_id) {
-        if (task_id === 'T1') return `<div style="font-size: 32px; font-weight: bold; text-align: center; margin: 30px 0;"><span class="target-word">TARGET = Feel Good, Warm, or Friendly</span></div>`;
-        if (task_id === 'T2') return `<div style="font-size: 32px; font-weight: bold; text-align: center; margin: 30px 0;"><span class="avoid-word">TARGET = Feel Bad, Uneasy, or Threatened</span></div>`;
-        if (task_id === 'T3' || task_id === 'T5') return `<div style="font-size: 32px; font-weight: bold; text-align: center; margin: 30px 0;"><span class="target-word">TARGET = Would Like to Interact With</span></div>`;
-        if (task_id === 'T4' || task_id === 'T6') return `<div style="font-size: 32px; font-weight: bold; text-align: center; margin: 30px 0;"><span class="avoid-word">TARGET = Avoid Interacting With</span></div>`;
-        return "";
+    function getSimplifiedFormula(task_id) {
+        let formula = "";
+        if (task_id === 'T1') formula = "T = feel good/ friendly";
+        else if (task_id === 'T2') formula = "T = feel bad/ threatened";
+        else if (task_id === 'T3' || task_id === 'T5') formula = "T = would like to";
+        else if (task_id === 'T4' || task_id === 'T6') formula = "T = avoid";
+        return `<div style="font-size: 40px; font-weight: bold; text-align: center; margin: 50px 0; color: #ffffff;">${formula}</div>`;
     }
 
     function getTaskTargetText(study, task_id) {
         if (study === 'AI') {
-            if (task_id === 'T1') return `In this task, your target is any AI-generated face that makes you feel <span class="target-word">good, warm, or friendly</span>.`;
-            if (task_id === 'T2') return `In this task, your target is any AI-generated face that makes you feel <span class="avoid-word">bad, uneasy, or threatened</span>.`;
-            if (task_id === 'T5') return `For this task, targets are any AI-agent you would <span class="target-word">like to interact or team up with</span> for your VH sessions.`;
-            if (task_id === 'T6') return `For this task, targets are any AI-agent you would <span class="avoid-word">avoid interacting or teaming up with</span> for your VH sessions.`;
+            if (task_id === 'T1') return `In this task, your target is any AI-generated face that makes you feel <strong>good, warm, or friendly</strong>.`;
+            if (task_id === 'T2') return `In this task, your target is any AI-generated face that makes you feel <strong>bad, uneasy, or threatened</strong>.`;
+            if (task_id === 'T5') return `For this task, targets are any AI-agent you would <strong>like to interact or team up with</strong> for your VH sessions.`;
+            if (task_id === 'T6') return `For this task, targets are any AI-agent you would <strong>avoid interacting or teaming up with</strong> for your VH sessions.`;
         } else {
-            if (task_id === 'T1') return `In this task, your target is any face that makes you feel <span class="target-word">good, warm, or friendly</span>.`;
-            if (task_id === 'T2') return `In this task, your target is any face that makes you feel <span class="avoid-word">bad, uneasy, or threatened</span>.`;
-            if (task_id === 'T3') return `For this task, targets are any individuals you would <span class="target-word">like to interact or team up with</span> for your VH sessions.`;
-            if (task_id === 'T4') return `For this task, targets are any individuals you would <span class="avoid-word">avoid interacting or teaming up with</span> for your VH sessions.`;
-            if (task_id === 'T5') return `For this task, targets are any individuals you would <span class="target-word">like to interact or team up with</span> for your VH sessions.`;
-            if (task_id === 'T6') return `For this task, targets are any individuals you would <span class="avoid-word">avoid interacting or teaming up with</span> for your VH sessions.`;
+            if (task_id === 'T1') return `In this task, your target is any face that makes you feel <strong>good, warm, or friendly</strong>.`;
+            if (task_id === 'T2') return `In this task, your target is any face that makes you feel <strong>bad, uneasy, or threatened</strong>.`;
+            if (task_id === 'T3') return `For this task, targets are any individuals you would <strong>like to interact or team up with</strong> for your VH sessions.`;
+            if (task_id === 'T4') return `For this task, targets are any individuals you would <strong>avoid interacting or teaming up with</strong> for your VH sessions.`;
+            if (task_id === 'T5') return `For this task, targets are any individuals you would <strong>like to interact or team up with</strong> for your VH sessions.`;
+            if (task_id === 'T6') return `For this task, targets are any individuals you would <strong>avoid interacting or teaming up with</strong> for your VH sessions.`;
         }
         return "Please follow the instructions carefully.";
     }
@@ -299,12 +312,41 @@
                 current_task = row.task_id;
                 current_block = row.block_id;
 
+                // PAGE 1: 15-Second Forced Reading
                 let inst_1 = {
                     type: jsPsychHtmlButtonResponse,
-                    stimulus: `<div class="instruction-box"><h2 style="text-align:center;">Part ${seq_task}</h2><p>${getTaskTargetText(study_condition, current_task)}</p>${getTaskFormula(current_task)}<p>Please decide whether each face is a target.</p><p style="text-align:right; font-size:14px; color:#555;">[${current_module} | ${current_task}]</p></div>`,
-                    choices: ['Next']
+                    stimulus: `<div class="instruction-box"><h2 style="text-align:center;">Part ${seq_task}</h2><p>${getTaskTargetText(study_condition, current_task)}</p><br><p>Please decide whether each face is a target.</p><p style="text-align:right; font-size:14px; color:#555;">[${current_module} | ${current_task}]</p></div>`,
+                    choices: ['Next'],
+                    on_load: function() {
+                        let btn = document.querySelector('.jspsych-btn');
+                        btn.disabled = true;
+                        btn.style.opacity = '0.5';
+                        btn.style.cursor = 'not-allowed';
+                        let countdown = 15;
+                        btn.innerHTML = `Please read carefully... (${countdown})`;
+                        let interval = setInterval(function() {
+                            countdown--;
+                            if(countdown > 0) {
+                                btn.innerHTML = `Please read carefully... (${countdown})`;
+                            } else {
+                                btn.innerHTML = 'Next';
+                                btn.disabled = false;
+                                btn.style.opacity = '1';
+                                btn.style.cursor = 'pointer';
+                                clearInterval(interval);
+                            }
+                        }, 1000);
+                    }
                 };
 
+                // PAGE 2: Simplified Formula Emphasis
+                let inst_1_5 = {
+                    type: jsPsychHtmlButtonResponse,
+                    stimulus: `<div class="instruction-box"><h2 style="text-align:center;">Target Reminder</h2>${getSimplifiedFormula(current_task)}</div>`,
+                    choices: ['Continue to Feedback Rules']
+                };
+
+                // PAGE 3: Feedback Rules
                 let inst_2 = {
                     type: jsPsychHtmlButtonResponse,
                     stimulus: `<div class="instruction-box"><p>On each trial, you will receive social feedback indicating how many other participants agreed with your decision.</p></div>`,
@@ -361,8 +403,9 @@
                     }
                 };
 
+                // Added inst_1_5 to the strictly validated loop
                 timeline.push({
-                    timeline: [inst_1, inst_2, check_screen, feedback_screen],
+                    timeline: [inst_1, inst_1_5, inst_2, check_screen, feedback_screen],
                     loop_function: function(data) {
                         let last_quiz = data.filter({trial_type: 'survey-multi-choice'}).last(1).values()[0];
                         return last_quiz.passed === false; 
@@ -374,10 +417,18 @@
                     stimulus: `
                     <div class="instruction-box" style="text-align:center;">
                         <p>Rest one finger on the <strong>SPACE BAR</strong>, and another finger on the <strong>T</strong> key.</p>
-                        <div style="font-size: 32px; font-weight: bold; text-align: center; margin: 40px 0;">
-                            <span class="target-word">T = TARGET</span><br><br>
-                            <span style="color:#aaa;">Space Bar = Pass (Non-Target)</span>
-                        </div>
+                        
+                        <table class="key-mapping-table">
+                            <tr>
+                                <td class="key-col"><span class="target-word">T</span></td>
+                                <td><span class="target-word">= TARGET</span></td>
+                            </tr>
+                            <tr>
+                                <td class="key-col"><span style="color:#aaa;">Space Bar</span></td>
+                                <td><span style="color:#aaa;">= Pass (Non-Target)</span></td>
+                            </tr>
+                        </table>
+                        
                         <p>If the face is a target, press T. If the face is NOT a target, press the SPACE BAR to pass.</p>
                     </div>`,
                     choices: ['Continue']
@@ -389,8 +440,13 @@
                     choices: ['Begin Practice']
                 });
 
-                let practice_rows = csv_data.filter(r => r.task_id === current_task).slice(0, 5);
-                practice_rows.forEach((p_row) => {
+                let task_rows = csv_data.filter(r => r.task_id === current_task);
+                let later_blocks = task_rows.filter(r => r.block_id !== 1 && String(r.block_id) !== '1');
+                let practice_pool = later_blocks.length >= 5 ? later_blocks : task_rows;
+                
+                let shuffled_practice = shuffleArray([...practice_pool]).slice(0, 5);
+
+                shuffled_practice.forEach((p_row) => {
                     let p_context = "";
                     if (study_condition === 'Human' && p_row.module_id === 'M2') p_context = "context-inperson";
                     if (study_condition === 'Human' && p_row.module_id === 'M3') p_context = "context-online";
