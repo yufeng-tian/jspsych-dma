@@ -21,27 +21,22 @@
         --bg-inperson: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%233a3a3a'%3E%3Cpath d='M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z'/%3E%3C/svg%3E");
       }
 
-      /* ABSOLUTE SCROLLBAR NUKE */
       html, body { background-color: #1a1a1a; color: #ffffff; font-family: 'Arial', sans-serif; margin: 0; padding: 0; height: 100%; width: 100%; overflow: hidden; }
       
-      /* Fixed Watermark Classes */
       .context-online { background-image: var(--bg-online); background-repeat: no-repeat; background-size: contain; background-position: center; }
       .context-inperson { background-image: var(--bg-inperson); background-repeat: no-repeat; background-size: contain; background-position: center; }
 
-      /* Strict Target Colors */
       .target-word { color: #00ffcc; font-weight: bold; font-size: 24px; }
       .avoid-word { color: #ff5555; font-weight: bold; font-size: 24px; }
       
       .feedback-number { font-size: 80px; font-weight: bold; color: #ffffff; line-height: 1; margin-bottom: 5px; position: relative; z-index: 20;}
       .feedback-label { font-size: 24px; color: #cccccc; margin-top: 0px; position: relative; z-index: 20;}
       
-      /* Stimulus Box */
       .stimulus-container { position: relative; display: inline-block; z-index: 10; }
       .stimulus-image { max-height: 500px; max-width: 500px; border: 2px solid #333; border-radius: 8px; display: block; }
       .practice-banner { position: absolute; top: -40px; left: 50%; transform: translateX(-50%); background-color: #ffffff; color: #000; padding: 5px 20px; font-weight: bold; font-size: 20px; border-radius: 5px; letter-spacing: 2px; white-space: nowrap; }
 
       .instruction-box { text-align: left; max-width: 800px; margin: auto; line-height: 1.6; font-size: 22px; padding: 20px; position: relative; z-index: 10;}
-      
       .progress-tracker { position: fixed; top: 15px; right: 20px; font-size: 16px; color: #555; font-weight: bold; z-index: 30;}
       
       .jspsych-survey-multi-choice-question { text-align: left; margin-bottom: 30px; font-size: 20px;}
@@ -52,20 +47,15 @@
   <body></body>
   <script>
 
-    // GLOBAL CRASH CATCHER: If anything breaks, it prints the error to the screen
     window.onerror = function(msg, url, lineNo) {
-        document.body.innerHTML = `<div style="background-color:#1a1a1a; color:#ff5555; padding:40px; text-align:center; font-family:Arial; height:100vh; width:100vw;">
+        document.body.innerHTML = `<div style="background-color:#1a1a1a; color:#ff5555; padding:40px; text-align:center; font-family:Arial; height:100vh; width:100vw; z-index:9999; position:absolute;">
             <h2>System Crash Detected</h2>
             <p><strong>${msg}</strong></p>
             <p>Line: ${lineNo}</p>
-            <p>Please take a screenshot of this page and share it.</p>
         </div>`;
         return false;
     };
 
-    /* =========================================================
-       BLOCK 1: INITIALIZATION & DATAPIPE
-       ========================================================= */
     const jsPsych = initJsPsych({
         on_finish: function() {
             const experiment_id = "YOUR_DATAPIPE_ID_HERE"; 
@@ -86,9 +76,6 @@
 
     jsPsych.data.addProperties({ subject_id: subject_id, condition: study_condition, list_used: list_path });
 
-    /* =========================================================
-       BLOCK 2: TEXT GENERATORS
-       ========================================================= */
     function getWatermark(context) {
         if (!context) return "";
         return `<div class="${context}" style="position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 400px; height: 400px; z-index: 0; pointer-events: none;"></div>`;
@@ -133,26 +120,35 @@
     }
 
     function calculateFeedback(is_target, response_key, intensity) {
-        // Highly fault-tolerant sanitization of data inputs
-        const clean_intensity = String(intensity || '').trim().toLowerCase();
+        let raw_int = String(intensity || 'neutral').trim().toLowerCase();
         let resp = String(response_key || '').trim().toLowerCase();
         
-        // Evaluates correct answers (handles string, integer, space, or T)
         let is_correct = false;
+        // Strictly checks the key press and logic
         if (String(is_target).trim() === '1' && resp === 't') is_correct = true;
         if (String(is_target).trim() === '0' && (resp === ' ' || resp === 'space' || resp === 'spacebar' || resp === '')) is_correct = true;
         
         let min, max;
         if (is_correct) {
-            if (clean_intensity === 'clear') { min = 90; max = 98; }
-            else if (clean_intensity === 'subtle') { min = 70; max = 80; }
-            else { min = 55; max = 65; } // Default/Neutral
+            if (raw_int.includes('clear')) { min = 90; max = 98; }
+            else if (raw_int.includes('subtle')) { min = 70; max = 80; }
+            else { min = 55; max = 65; } // Neutral
         } else { 
-            if (clean_intensity === 'clear') { min = 2; max = 10; }
-            else if (clean_intensity === 'subtle') { min = 20; max = 30; }
-            else { min = 35; max = 45; } // Default/Neutral
+            if (raw_int.includes('clear')) { min = 2; max = 10; }
+            else if (raw_int.includes('subtle')) { min = 20; max = 30; }
+            else { min = 35; max = 45; } // Neutral
         }
-        return `<div class="feedback-number">${Math.floor(Math.random() * (max - min + 1)) + min}%</div><div class="feedback-label">of others agree with you</div>`;
+        
+        let percent = Math.floor(Math.random() * (max - min + 1)) + min;
+        
+        // ADDED LIVE DEBUG BOX: This prints the exact variables the computer is reading
+        return `
+            <div class="feedback-number">${percent}%</div>
+            <div class="feedback-label">of others agree with you</div>
+            <div style="margin-top: 40px; font-size: 14px; color: #ffaa00; border: 1px solid #ffaa00; padding: 5px;">
+                [DEBUG BOX] Target: ${is_target} | Pressed: '${resp}' | Correct: ${is_correct} | Intensity Found: '${raw_int}'
+            </div>
+        `;
     }
 
     function getProgressBar(percent) {
@@ -166,52 +162,57 @@
     }
 
     /* =========================================================
-       BLOCK 3: HIERARCHICAL TIMELINE BUILDER
+       BLOCK 3: FUZZY DATA MATCHER & TIMELINE BUILDER
        ========================================================= */
     Papa.parse(list_path, {
         download: true, 
         header: true, 
         dynamicTyping: true, 
         skipEmptyLines: true,
-        // NATIVE PAPAPARSE SANITIZER: Safely trims invisible BOMs from headers
-        transformHeader: function(header) {
-            return header.trim().toLowerCase().replace(/[^a-z0-9_]/g, '');
-        },
         complete: function(results) { 
             
-            // Ensures we didn't get a 404 HTML page instead of a CSV
             if (!results || !results.data || results.data.length === 0) {
-                document.body.innerHTML = `<div style='color:#ff5555; text-align:center; padding:50px;'><h2>File Not Found Error</h2><p>Could not load CSV: ${list_path}</p><p>Please check your GitHub repository to ensure the file exists and the filename is exact.</p></div>`;
+                document.body.innerHTML = `<div style='color:#ff5555; text-align:center; padding:50px;'><h2>File Not Found</h2><p>Could not load CSV list.</p></div>`;
                 return;
             }
 
             const clean_data = [];
+            
+            // FUZZY MATCHER: Hunts for columns even if they have hidden typos or invisible spaces
             results.data.forEach(row => {
-                if (row.stimulus) {
-                    // Normalize the intensity cell
-                    if (row.intensity && typeof row.intensity === 'string') {
-                        row.intensity = row.intensity.trim().toLowerCase();
-                    }
+                let keys = Object.keys(row);
+                let stim_key = keys.find(k => k.toLowerCase().includes('stimulus'));
+                let int_key = keys.find(k => k.toLowerCase().includes('intensity'));
+                let tar_key = keys.find(k => k.toLowerCase().includes('target'));
+                let task_key = keys.find(k => k.toLowerCase().includes('task'));
+                let mod_key = keys.find(k => k.toLowerCase().includes('module'));
+                let block_key = keys.find(k => k.toLowerCase().includes('block'));
+                
+                if (stim_key && row[stim_key]) {
+                    let clean_row = {
+                        stimulus: String(row[stim_key]).trim(),
+                        intensity: int_key ? String(row[int_key]).trim().toLowerCase() : 'neutral',
+                        is_target: tar_key ? String(row[tar_key]).trim() : '0',
+                        task_id: task_key ? String(row[task_key]).trim() : '',
+                        module_id: mod_key ? String(row[mod_key]).trim() : '',
+                        block_id: block_key ? String(row[block_key]).trim() : ''
+                    };
                     
-                    // Force Neutral Logic for "o" filenames
-                    let base_file = String(row.stimulus).split('/').pop();
+                    // Force Neutral Logic for "o" filenames (per your master instructions)
+                    let base_file = clean_row.stimulus.split('/').pop();
                     if (base_file.includes('o')) {
-                        row.expression = 'neutral';
-                        row.intensity = 'neutral';
+                        clean_row.intensity = 'neutral';
                     }
-                    clean_data.push(row);
+                    clean_data.push(clean_row);
                 }
             });
 
             if (clean_data.length === 0) {
-                document.body.innerHTML = `<div style='color:#ff5555; text-align:center; padding:50px;'><h2>Data Error</h2><p>File loaded, but no valid stimuli were found.</p></div>`;
+                document.body.innerHTML = `<div style='color:#ff5555; text-align:center; padding:50px;'><h2>Data Mapping Error</h2><p>The system could not find the 'stimulus' column in the CSV.</p></div>`;
                 return;
             }
 
             buildExperiment(clean_data); 
-        },
-        error: function(err) {
-             document.body.innerHTML = `<div style='color:#ff5555; text-align:center; padding:50px;'><h2>Network Error</h2><p>${err}</p></div>`;
         }
     });
 
@@ -224,10 +225,8 @@
             button_label: "Enter Fullscreen"
         });
 
-        const valid_rows = csv_data.filter(r => r.stimulus);
-        const total_real_trials = valid_rows.length; 
-        
-        const image_array = valid_rows.map(row => row.stimulus);
+        const total_real_trials = csv_data.length; 
+        const image_array = csv_data.map(row => row.stimulus);
         timeline.push({ type: jsPsychPreload, images: image_array, message: "Loading visual assets..." });
 
         let current_module = null;
@@ -239,7 +238,7 @@
         let seq_block = 0;
         let trial_counter = 0; 
 
-        valid_rows.forEach((row) => {
+        csv_data.forEach((row) => {
             let context_css = "";
             if (study_condition === 'Human') {
                 if (row.module_id === 'M2') context_css = "context-inperson";
