@@ -21,21 +21,17 @@
         --bg-inperson: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%233a3a3a'%3E%3Cpath d='M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z'/%3E%3C/svg%3E");
       }
 
-      /* ABSOLUTE SCROLLBAR NUKE */
       html, body { background-color: #1a1a1a; color: #ffffff; font-family: 'Arial', sans-serif; margin: 0; padding: 0; height: 100%; width: 100%; overflow: hidden; }
       
-      /* Fixed Watermark Classes */
       .context-online { background-image: var(--bg-online); background-repeat: no-repeat; background-size: contain; background-position: center; }
       .context-inperson { background-image: var(--bg-inperson); background-repeat: no-repeat; background-size: contain; background-position: center; }
 
-      /* Strict Target Colors */
       .target-word { color: #00ffcc; font-weight: bold; font-size: 24px; }
       .avoid-word { color: #ff5555; font-weight: bold; font-size: 24px; }
       
       .feedback-number { font-size: 80px; font-weight: bold; color: #ffffff; line-height: 1; margin-bottom: 5px; position: relative; z-index: 20;}
       .feedback-label { font-size: 24px; color: #cccccc; margin-top: 0px; position: relative; z-index: 20;}
       
-      /* Stimulus Box */
       .stimulus-container { position: relative; display: inline-block; z-index: 10; }
       .stimulus-image { max-height: 500px; max-width: 500px; border: 2px solid #333; border-radius: 8px; display: block; }
       .practice-banner { position: absolute; top: -40px; left: 50%; transform: translateX(-50%); background-color: #ffffff; color: #000; padding: 5px 20px; font-weight: bold; font-size: 20px; border-radius: 5px; letter-spacing: 2px; white-space: nowrap; }
@@ -129,11 +125,11 @@
         if (is_correct) {
             if (clean_intensity === 'clear') { min = 90; max = 98; }
             else if (clean_intensity === 'subtle') { min = 70; max = 80; }
-            else { min = 55; max = 65; }
+            else { min = 55; max = 65; } // Neutral / Default Fallback
         } else { 
             if (clean_intensity === 'clear') { min = 2; max = 10; }
             else if (clean_intensity === 'subtle') { min = 20; max = 30; }
-            else { min = 35; max = 45; }
+            else { min = 35; max = 45; } // Neutral / Default Fallback
         }
         return `<div class="feedback-number">${Math.floor(Math.random() * (max - min + 1)) + min}%</div><div class="feedback-label">of others agree with you</div>`;
     }
@@ -153,7 +149,24 @@
        ========================================================= */
     Papa.parse(list_path, {
         download: true, header: true, dynamicTyping: true, skipEmptyLines: true,
-        complete: function(results) { buildExperiment(results.data); }
+        complete: function(results) { 
+            
+            // BULLETPROOF DATA SANITIZER
+            // This forces every single column header to lowercase and deletes invisible spaces,
+            // guaranteeing the code can read the CSV no matter which of the 24 lists is loaded.
+            const clean_data = results.data.map(row => {
+                let clean_row = {};
+                for (let key in row) {
+                    if (key) {
+                        let clean_key = key.trim().toLowerCase();
+                        clean_row[clean_key] = typeof row[key] === 'string' ? row[key].trim() : row[key];
+                    }
+                }
+                return clean_row;
+            });
+
+            buildExperiment(clean_data); 
+        }
     });
 
     function buildExperiment(csv_data) {
@@ -182,11 +195,10 @@
 
         valid_rows.forEach((row) => {
             let context_css = "";
-            // Icon applies only to Human condition for M2 and M3
             if (study_condition === 'Human') {
                 if (row.module_id === 'M2') context_css = "context-inperson";
                 else if (row.module_id === 'M3') context_css = "context-online";
-            } 
+            }
 
             let is_new_module = (row.module_id !== current_module);
             let is_new_task = (row.task_id !== current_task);
@@ -336,7 +348,6 @@
                     choices: ['Begin Practice']
                 });
 
-                // G. Automated Practice Extraction
                 let practice_rows = valid_rows.filter(r => r.task_id === current_task).slice(0, 5);
                 practice_rows.forEach((p_row) => {
                     let p_context = "";
