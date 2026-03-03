@@ -42,10 +42,6 @@
       .jspsych-survey-multi-choice-question { text-align: left; margin-bottom: 30px; font-size: 20px;}
       .jspsych-survey-multi-choice-option { margin-bottom: 10px; }
       .jspsych-btn { font-size: 18px; padding: 10px 20px; margin-top: 20px;}
-      
-      /* Aligned Key Mapping Table Styles */
-      .key-mapping-table { margin: 40px auto; font-size: 32px; font-weight: bold; text-align: left; border-collapse: separate; border-spacing: 0 15px;}
-      .key-col { padding-right: 20px; text-align: right; }
     </style>
   </head>
   <body></body>
@@ -62,12 +58,14 @@
 
     const jsPsych = initJsPsych({
         on_finish: function() {
+            // ---> STEP 1: PASTE YOUR DATAPIPE ID HERE <---
             const experiment_id = "YOUR_DATAPIPE_ID_HERE"; 
             
             const filename = `subject_${subject_id}_data.csv`;
             const data_to_save = jsPsych.data.get().csv();
             
             jsPsychPipe.saveData(experiment_id, filename, data_to_save).then(function() {
+                // ---> STEP 2: PASTE YOUR QUALTRICS SURVEY LINK HERE <---
                 const qualtrics_url = "https://yourschool.qualtrics.com/jfe/form/SV_123456789";
                 window.location.href = `${qualtrics_url}?PROLIFIC_PID=${subject_id}&condition=${study_condition}`;
             });
@@ -403,7 +401,6 @@
                     }
                 };
 
-                // Added inst_1_5 to the strictly validated loop
                 timeline.push({
                     timeline: [inst_1, inst_1_5, inst_2, check_screen, feedback_screen],
                     loop_function: function(data) {
@@ -412,32 +409,27 @@
                     }
                 });
 
+                // MOTOR RULES & KEY MAPPING (Converted to Space Bar logic)
                 timeline.push({
-                    type: jsPsychHtmlButtonResponse,
+                    type: jsPsychHtmlKeyboardResponse,
                     stimulus: `
                     <div class="instruction-box" style="text-align:center;">
+                        <div style="display: inline-block; text-align: left; font-size: 26px; line-height: 1.8; margin-top: 20px; margin-bottom: 40px;">
+                            If you identify a target, press the <strong>T</strong> key.<br>
+                            If not, press the <strong>SPACE BAR</strong> to pass.
+                        </div>
+                        
                         <p>Rest one finger on the <strong>SPACE BAR</strong>, and another finger on the <strong>T</strong> key.</p>
                         
-                        <table class="key-mapping-table">
-                            <tr>
-                                <td class="key-col"><span class="target-word">T</span></td>
-                                <td><span class="target-word">= TARGET</span></td>
-                            </tr>
-                            <tr>
-                                <td class="key-col"><span style="color:#aaa;">Space Bar</span></td>
-                                <td><span style="color:#aaa;">= Pass (Non-Target)</span></td>
-                            </tr>
-                        </table>
-                        
-                        <p>If the face is a target, press T. If the face is NOT a target, press the SPACE BAR to pass.</p>
+                        <p style="color:#888; font-size: 18px; margin-top: 40px;">Press the SPACE BAR to continue.</p>
                     </div>`,
-                    choices: ['Continue']
+                    choices: [' ']
                 });
 
                 timeline.push({
-                    type: jsPsychHtmlButtonResponse,
-                    stimulus: `<div class="instruction-box" style="text-align:center;"><h2>Practice Trials</h2><p>You will now complete 5 practice trials.</p></div>`,
-                    choices: ['Begin Practice']
+                    type: jsPsychHtmlKeyboardResponse,
+                    stimulus: `<div class="instruction-box" style="text-align:center;"><h2>Practice Trials</h2><p>You will now complete 5 practice trials.</p><br><p style="color:#888; font-size: 18px;">Press the SPACE BAR to begin.</p></div>`,
+                    choices: [' ']
                 });
 
                 let task_rows = csv_data.filter(r => r.task_id === current_task);
