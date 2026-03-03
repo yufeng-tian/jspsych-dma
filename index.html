@@ -1,8 +1,9 @@
 <!DOCTYPE html>
 <html>
-  <head>
+
+<head>
     <title>VH Social Perception Study</title>
-    
+
     <script src="https://unpkg.com/jspsych@7.3.4"></script>
     <script src="https://unpkg.com/@jspsych/plugin-html-keyboard-response@1.1.3"></script>
     <script src="https://unpkg.com/@jspsych/plugin-html-button-response@1.1.3"></script>
@@ -10,43 +11,135 @@
     <script src="https://unpkg.com/@jspsych/plugin-preload@1.1.3"></script>
     <script src="https://unpkg.com/@jspsych/plugin-fullscreen@1.1.2"></script>
     <link href="https://unpkg.com/jspsych@7.3.4/css/jspsych.css" rel="stylesheet" type="text/css" />
-    
+
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
     <script src="https://unpkg.com/@jspsych-builder/datapipe@0.1.0"></script>
 
     <style>
-      /* --- Root Variables for SVG Background Watermarks --- */
-      :root {
-        --bg-online: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%233a3a3a'%3E%3Cpath d='M1 9l2 2c4.97-4.97 13.03-4.97 18 0l2-2C16.93 2.93 7.08 2.93 1 9zm8 8l3 3 3-3c-1.65-1.66-4.34-1.66-6 0zm-4-4l2 2c2.76-2.76 7.24-2.76 10 0l2-2C15.14 9.14 8.87 9.14 5 13z'/%3E%3C/svg%3E");
-        --bg-inperson: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%233a3a3a'%3E%3Cpath d='M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z'/%3E%3C/svg%3E");
-      }
+        /* --- Root Variables for SVG Background Watermarks --- */
+        :root {
+            --bg-online: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%233a3a3a'%3E%3Cpath d='M1 9l2 2c4.97-4.97 13.03-4.97 18 0l2-2C16.93 2.93 7.08 2.93 1 9zm8 8l3 3 3-3c-1.65-1.66-4.34-1.66-6 0zm-4-4l2 2c2.76-2.76 7.24-2.76 10 0l2-2C15.14 9.14 8.87 9.14 5 13z'/%3E%3C/svg%3E");
+            --bg-inperson: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%233a3a3a'%3E%3Cpath d='M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z'/%3E%3C/svg%3E");
+        }
 
-      html, body { background-color: #1a1a1a; color: #ffffff; font-family: 'Arial', sans-serif; margin: 0; padding: 0; height: 100%; width: 100%; overflow: hidden; }
-      
-      .context-online { background-image: var(--bg-online); background-repeat: no-repeat; background-size: contain; background-position: center; }
-      .context-inperson { background-image: var(--bg-inperson); background-repeat: no-repeat; background-size: contain; background-position: center; }
+        html,
+        body {
+            background-color: #1a1a1a;
+            color: #ffffff;
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            width: 100%;
+            overflow: hidden;
+        }
 
-      .target-word { color: #00ffcc; font-weight: bold; font-size: 24px; }
-      .avoid-word { color: #ff5555; font-weight: bold; font-size: 24px; }
-      
-      .feedback-number { font-size: 80px; font-weight: bold; color: #ffffff; line-height: 1; margin-bottom: 5px; position: relative; z-index: 20;}
-      .feedback-label { font-size: 24px; color: #cccccc; margin-top: 0px; position: relative; z-index: 20;}
-      
-      .stimulus-container { position: relative; display: inline-block; z-index: 10; }
-      .stimulus-image { max-height: 500px; max-width: 500px; border: 2px solid #333; border-radius: 8px; display: block; }
-      .practice-banner { position: absolute; top: -40px; left: 50%; transform: translateX(-50%); background-color: #ffffff; color: #000; padding: 5px 20px; font-weight: bold; font-size: 20px; border-radius: 5px; letter-spacing: 2px; white-space: nowrap; }
+        .context-online {
+            background-image: var(--bg-online);
+            background-repeat: no-repeat;
+            background-size: contain;
+            background-position: center;
+        }
 
-      .instruction-box { text-align: left; max-width: 800px; margin: auto; line-height: 1.6; font-size: 22px; padding: 20px; position: relative; z-index: 10;}
-      
-      .jspsych-survey-multi-choice-question { text-align: left; margin-bottom: 30px; font-size: 20px;}
-      .jspsych-survey-multi-choice-option { margin-bottom: 10px; }
-      .jspsych-btn { font-size: 18px; padding: 10px 20px; margin-top: 20px;}
+        .context-inperson {
+            background-image: var(--bg-inperson);
+            background-repeat: no-repeat;
+            background-size: contain;
+            background-position: center;
+        }
+
+        .target-word {
+            color: #00ffcc;
+            font-weight: bold;
+            font-size: 24px;
+        }
+
+        .avoid-word {
+            color: #ff5555;
+            font-weight: bold;
+            font-size: 24px;
+        }
+
+        .feedback-number {
+            font-size: 80px;
+            font-weight: bold;
+            color: #ffffff;
+            line-height: 1;
+            margin-bottom: 5px;
+            position: relative;
+            z-index: 20;
+        }
+
+        .feedback-label {
+            font-size: 24px;
+            color: #cccccc;
+            margin-top: 0px;
+            position: relative;
+            z-index: 20;
+        }
+
+        .stimulus-container {
+            position: relative;
+            display: inline-block;
+            z-index: 10;
+        }
+
+        .stimulus-image {
+            max-height: 500px;
+            max-width: 500px;
+            border: 2px solid #333;
+            border-radius: 8px;
+            display: block;
+        }
+
+        .practice-banner {
+            position: absolute;
+            top: -40px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #ffffff;
+            color: #000;
+            padding: 5px 20px;
+            font-weight: bold;
+            font-size: 20px;
+            border-radius: 5px;
+            letter-spacing: 2px;
+            white-space: nowrap;
+        }
+
+        .instruction-box {
+            text-align: left;
+            max-width: 800px;
+            margin: auto;
+            line-height: 1.6;
+            font-size: 22px;
+            padding: 20px;
+            position: relative;
+            z-index: 10;
+        }
+
+        .jspsych-survey-multi-choice-question {
+            text-align: left;
+            margin-bottom: 30px;
+            font-size: 20px;
+        }
+
+        .jspsych-survey-multi-choice-option {
+            margin-bottom: 10px;
+        }
+
+        .jspsych-btn {
+            font-size: 18px;
+            padding: 10px 20px;
+            margin-top: 20px;
+        }
     </style>
-  </head>
-  <body></body>
-  <script>
+</head>
 
-    window.onerror = function(msg, url, lineNo) {
+<body></body>
+<script>
+
+    window.onerror = function (msg, url, lineNo) {
         document.body.innerHTML = `<div style="background-color:#1a1a1a; color:#ff5555; padding:40px; text-align:center; font-family:Arial; height:100vh; width:100vw; z-index:9999; position:absolute;">
             <h2>System Crash Detected</h2>
             <p><strong>${msg}</strong></p>
@@ -56,13 +149,13 @@
     };
 
     const jsPsych = initJsPsych({
-        on_finish: function() {
-            const experiment_id = "YOUR_DATAPIPE_ID_HERE"; 
-            
+        on_finish: function () {
+            const experiment_id = "YOUR_DATAPIPE_ID_HERE";
+
             const filename = `subject_${subject_id}_data.csv`;
             const data_to_save = jsPsych.data.get().csv();
-            
-            jsPsychPipe.saveData(experiment_id, filename, data_to_save).then(function() {
+
+            jsPsychPipe.saveData(experiment_id, filename, data_to_save).then(function () {
                 const qualtrics_url = "https://yourschool.qualtrics.com/jfe/form/SV_123456789";
                 window.location.href = `${qualtrics_url}?PROLIFIC_PID=${subject_id}&condition=${study_condition}`;
             });
@@ -70,7 +163,7 @@
     });
 
     const subject_id = jsPsych.data.getURLVariable('PROLIFIC_PID') || Math.floor(Math.random() * 10000).toString();
-    const study_condition = jsPsych.data.getURLVariable('condition') || 'Human'; 
+    const study_condition = jsPsych.data.getURLVariable('condition') || 'Human';
     const list_num = (parseInt(subject_id.replace(/\D/g, '')) || 1) % 24 + 1;
     const list_path = `lists/list_${String(list_num).padStart(2, '0')}.csv`;
 
@@ -132,24 +225,24 @@
 
     function calculateFeedback(is_target, response_key, filename_intensity) {
         let resp = String(response_key || '').trim().toLowerCase();
-        
+
         let is_correct = false;
         if (String(is_target).trim() === '1' && resp === 't') is_correct = true;
         if (String(is_target).trim() === '0' && (resp === ' ' || resp === 'space' || resp === 'spacebar' || resp === '')) is_correct = true;
-        
+
         let min, max;
         if (is_correct) {
             if (filename_intensity === 'clear') { min = 90; max = 98; }
             else if (filename_intensity === 'subtle') { min = 70; max = 80; }
-            else { min = 55; max = 65; } 
-        } else { 
+            else { min = 55; max = 65; }
+        } else {
             if (filename_intensity === 'clear') { min = 2; max = 10; }
             else if (filename_intensity === 'subtle') { min = 20; max = 30; }
-            else { min = 35; max = 45; } 
+            else { min = 35; max = 45; }
         }
-        
+
         let percent = Math.floor(Math.random() * (max - min + 1)) + min;
-        
+
         return `
             <div class="feedback-number">${percent}%</div>
             <div class="feedback-label">of others agree with you</div>
@@ -170,19 +263,19 @@
        BLOCK 3: FILENAME EXTRACTOR & TIMELINE BUILDER
        ========================================================= */
     Papa.parse(list_path, {
-        download: true, 
-        header: true, 
-        dynamicTyping: true, 
+        download: true,
+        header: true,
+        dynamicTyping: true,
         skipEmptyLines: true,
-        complete: function(results) { 
-            
+        complete: function (results) {
+
             if (!results || !results.data || results.data.length === 0) {
                 document.body.innerHTML = `<div style='color:#ff5555; text-align:center; padding:50px;'><h2>File Not Found</h2><p>Could not load CSV list.</p></div>`;
                 return;
             }
 
             const clean_data = [];
-            
+
             results.data.forEach(row => {
                 let keys = Object.keys(row);
                 let stim_k = keys.find(k => String(k).toLowerCase().includes('stim'));
@@ -190,27 +283,27 @@
                 let task_k = keys.find(k => String(k).toLowerCase().includes('task'));
                 let mod_k = keys.find(k => String(k).toLowerCase().includes('mod'));
                 let block_k = keys.find(k => String(k).toLowerCase().includes('block'));
-                
+
                 if (stim_k && row[stim_k]) {
                     let stimulus_val = String(row[stim_k]).trim();
-                    let base_file = stimulus_val.split('/').pop();       
-                    let prefix = base_file.split('_')[0].toLowerCase();  
-                    let intensity_char = prefix.slice(-1);               
-                    
+                    let base_file = stimulus_val.split('/').pop();
+                    let prefix = base_file.split('_')[0].toLowerCase();
+                    let intensity_char = prefix.slice(-1);
+
                     let derived_intensity = 'neutral';
                     if (intensity_char === 'c') derived_intensity = 'clear';
                     if (intensity_char === 's') derived_intensity = 'subtle';
                     if (base_file.includes('o')) derived_intensity = 'neutral';
-                    
+
                     let clean_row = {
                         stimulus: stimulus_val,
-                        intensity: derived_intensity, 
+                        intensity: derived_intensity,
                         is_target: tar_k ? String(row[tar_k]).trim() : '0',
                         task_id: task_k ? String(row[task_k]).trim() : '',
                         module_id: mod_k ? String(row[mod_k]).trim() : '',
                         block_id: block_k ? String(row[block_k]).trim() : ''
                     };
-                    
+
                     clean_data.push(clean_row);
                 }
             });
@@ -220,7 +313,7 @@
                 return;
             }
 
-            buildExperiment(clean_data); 
+            buildExperiment(clean_data);
         }
     });
 
@@ -233,9 +326,14 @@
             button_label: "Enter Fullscreen"
         });
 
-        const total_real_trials = csv_data.length; 
+        const total_real_trials = csv_data.length;
         const image_array = csv_data.map(row => row.stimulus);
-        timeline.push({ type: jsPsychPreload, images: image_array, message: "Loading visual assets..." });
+        timeline.push({
+            type: jsPsychPreload,
+            images: image_array,
+            message: "<div class='instruction-box' style='text-align:center;'><h2>Loading Task Environment...</h2><p>Downloading visual assets. This may take a minute depending on your internet speed.</p></div>",
+            continue_after_error: true
+        });
 
         let current_module = null;
         let current_task = null;
@@ -244,7 +342,7 @@
         let seq_module = 0;
         let seq_task = 0;
         let seq_block = 0;
-        let trial_counter = 0; 
+        let trial_counter = 0;
 
         csv_data.forEach((row) => {
             let context_css = "";
@@ -294,8 +392,8 @@
                         choices: ['Continue']
                     });
                 }
-            } 
-            
+            }
+
             else if (is_new_task) {
                 timeline.push({
                     type: jsPsychHtmlKeyboardResponse,
@@ -312,16 +410,16 @@
                     type: jsPsychHtmlButtonResponse,
                     stimulus: `<div class="instruction-box"><h2 style="text-align:center;">Part ${seq_task}</h2><p>${getTaskTargetText(study_condition, current_task)}</p><br><p>Please decide whether each face is a target.</p><p style="text-align:right; font-size:14px; color:#555;">[${current_module} | ${current_task}]</p></div>`,
                     choices: ['Next'],
-                    on_load: function() {
+                    on_load: function () {
                         let btn = document.querySelector('.jspsych-btn');
                         btn.disabled = true;
                         btn.style.opacity = '0.5';
                         btn.style.cursor = 'not-allowed';
                         let countdown = 15;
                         btn.innerHTML = `Please read carefully... (${countdown})`;
-                        let interval = setInterval(function() {
+                        let interval = setInterval(function () {
                             countdown--;
-                            if(countdown > 0) {
+                            if (countdown > 0) {
                                 btn.innerHTML = `Please read carefully... (${countdown})`;
                             } else {
                                 btn.innerHTML = 'Next';
@@ -348,14 +446,14 @@
 
                 let q_prompts = [];
                 let correct_answers = [];
-                
+
                 if (current_task === 'T1' || current_task === 'T2') {
                     q_prompts.push({ prompt: "The target in this section is to identify faces that make you feel ______", options: ["good, warm, or friendly", "bad, uneasy, or threatened"], required: true, name: 'Q1' });
                     correct_answers.push(current_task === 'T1' ? "good, warm, or friendly" : "bad, uneasy, or threatened");
                 } else {
                     q_prompts.push({ prompt: "In this section, a target is a person you would ______ interacting with.", options: ["Like", "Avoid"], required: true, name: 'Q1' });
                     correct_answers.push((current_task === 'T3' || current_task === 'T5') ? "Like" : "Avoid");
-                    
+
                     if (study_condition === 'Human') {
                         // FIXED: The "in-person or online" parenthetical has been successfully removed.
                         q_prompts.push({ prompt: "The VH mode used in this section is ______.", options: ["In-person", "Online"], required: true, name: 'Q2' });
@@ -367,7 +465,7 @@
                     type: jsPsychSurveyMultiChoice,
                     preamble: `<div class="instruction-box" style="text-align:center;"><h2>Please select your answers:</h2></div>`,
                     questions: q_prompts,
-                    on_finish: function(data) {
+                    on_finish: function (data) {
                         let passed = true;
                         try {
                             let ans1 = (data.response && data.response.Q1) ? String(data.response.Q1).trim() : "";
@@ -376,14 +474,14 @@
                                 let ans2 = (data.response && data.response.Q2) ? String(data.response.Q2).trim() : "";
                                 if (ans2 !== correct_answers[1].trim()) passed = false;
                             }
-                        } catch(e) { passed = false; }
+                        } catch (e) { passed = false; }
                         data.passed = passed;
                     }
                 };
 
                 let feedback_screen = {
                     type: jsPsychHtmlButtonResponse,
-                    stimulus: function() {
+                    stimulus: function () {
                         let passed = jsPsych.data.get().last(1).values()[0].passed;
                         if (passed) {
                             return `<div class="instruction-box" style="text-align:center;"><h2 style="color:#00ffcc;">Correct!</h2><p>You may now proceed.</p></div>`;
@@ -391,7 +489,7 @@
                             return `<div class="instruction-box" style="text-align:center; color:#ff5555;"><h2>Incorrect</h2><p>One or more of your answers were incorrect.</p><p>You will now be sent back to re-read the instructions.</p></div>`;
                         }
                     },
-                    choices: function() {
+                    choices: function () {
                         let passed = jsPsych.data.get().last(1).values()[0].passed;
                         return passed ? ['Continue'] : ['Go Back to Instructions'];
                     }
@@ -399,9 +497,9 @@
 
                 timeline.push({
                     timeline: [inst_1, inst_1_5, inst_2, check_screen, feedback_screen],
-                    loop_function: function(data) {
-                        let last_quiz = data.filter({trial_type: 'survey-multi-choice'}).last(1).values()[0];
-                        return last_quiz.passed === false; 
+                    loop_function: function (data) {
+                        let last_quiz = data.filter({ trial_type: 'survey-multi-choice' }).last(1).values()[0];
+                        return last_quiz.passed === false;
                     }
                 });
 
@@ -433,7 +531,7 @@
                 let task_rows = csv_data.filter(r => r.task_id === current_task);
                 let later_blocks = task_rows.filter(r => r.block_id !== 1 && String(r.block_id) !== '1');
                 let practice_pool = later_blocks.length >= 5 ? later_blocks : task_rows;
-                
+
                 let shuffled_practice = shuffleArray([...practice_pool]).slice(0, 5);
 
                 shuffled_practice.forEach((p_row) => {
@@ -448,9 +546,9 @@
                         type: jsPsychHtmlKeyboardResponse,
                         stimulus: w_mark + `<div class="stimulus-container"><div class="practice-banner">PRACTICE</div><img src="${p_row.stimulus}" class="stimulus-image"></div>`,
                         choices: ['t', ' '], data: { is_practice: true, task_id: p_row.task_id },
-                        on_finish: function(data) { data.feedback_html = w_mark + `<div class="stimulus-container"><div class="practice-banner">PRACTICE</div>${calculateFeedback(p_row.is_target, data.response, p_row.intensity, p_row.stimulus)}</div>`; }
+                        on_finish: function (data) { data.feedback_html = w_mark + `<div class="stimulus-container"><div class="practice-banner">PRACTICE</div>${calculateFeedback(p_row.is_target, data.response, p_row.intensity, p_row.stimulus)}</div>`; }
                     });
-                    timeline.push({ type: jsPsychHtmlKeyboardResponse, stimulus: function() { return jsPsych.data.get().last(1).values()[0].feedback_html; }, choices: "NO_KEYS", trial_duration: 1500 });
+                    timeline.push({ type: jsPsychHtmlKeyboardResponse, stimulus: function () { return jsPsych.data.get().last(1).values()[0].feedback_html; }, choices: "NO_KEYS", trial_duration: 1500 });
                 });
 
                 timeline.push({
@@ -469,20 +567,20 @@
                 current_block = row.block_id;
             }
 
-            trial_counter++; 
+            trial_counter++;
             let w_mark = getWatermark(context_css);
 
             timeline.push({ type: jsPsychHtmlKeyboardResponse, stimulus: w_mark + `<div style="font-size: 80px; color: #555; position: relative; z-index: 20;">+</div>`, choices: "NO_KEYS", trial_duration: 500 });
-            
+
             timeline.push({
                 type: jsPsychHtmlKeyboardResponse,
                 stimulus: w_mark + `<div class="stimulus-container"><img src="${row.stimulus}" class="stimulus-image"></div>`,
-                choices: ['t', ' '], 
+                choices: ['t', ' '],
                 data: { is_practice: false, task_id: row.task_id, module_id: row.module_id, block_id: row.block_id, is_target: row.is_target, intensity: row.intensity, condition: study_condition },
-                on_finish: function(data) { data.feedback_html = w_mark + `<div class="stimulus-container">${calculateFeedback(data.is_target, data.response, data.intensity, row.stimulus)}</div>`; }
+                on_finish: function (data) { data.feedback_html = w_mark + `<div class="stimulus-container">${calculateFeedback(data.is_target, data.response, data.intensity, row.stimulus)}</div>`; }
             });
 
-            timeline.push({ type: jsPsychHtmlKeyboardResponse, stimulus: function() { return jsPsych.data.get().last(1).values()[0].feedback_html; }, choices: "NO_KEYS", trial_duration: 1500 });
+            timeline.push({ type: jsPsychHtmlKeyboardResponse, stimulus: function () { return jsPsych.data.get().last(1).values()[0].feedback_html; }, choices: "NO_KEYS", trial_duration: 1500 });
         });
 
         timeline.push({
@@ -493,5 +591,6 @@
 
         jsPsych.run(timeline);
     }
-  </script>
+</script>
+
 </html>
