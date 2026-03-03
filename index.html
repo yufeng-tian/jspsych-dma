@@ -57,14 +57,12 @@
 
     const jsPsych = initJsPsych({
         on_finish: function() {
-            // ---> STEP 1: PASTE YOUR DATAPIPE ID HERE <---
             const experiment_id = "YOUR_DATAPIPE_ID_HERE"; 
             
             const filename = `subject_${subject_id}_data.csv`;
             const data_to_save = jsPsych.data.get().csv();
             
             jsPsychPipe.saveData(experiment_id, filename, data_to_save).then(function() {
-                // ---> STEP 2: PASTE YOUR QUALTRICS SURVEY LINK HERE <---
                 const qualtrics_url = "https://yourschool.qualtrics.com/jfe/form/SV_123456789";
                 window.location.href = `${qualtrics_url}?PROLIFIC_PID=${subject_id}&condition=${study_condition}`;
             });
@@ -202,6 +200,7 @@
                     let derived_intensity = 'neutral';
                     if (intensity_char === 'c') derived_intensity = 'clear';
                     if (intensity_char === 's') derived_intensity = 'subtle';
+                    if (base_file.includes('o')) derived_intensity = 'neutral';
                     
                     let clean_row = {
                         stimulus: stimulus_val,
@@ -358,7 +357,8 @@
                     correct_answers.push((current_task === 'T3' || current_task === 'T5') ? "Like" : "Avoid");
                     
                     if (study_condition === 'Human') {
-                        q_prompts.push({ prompt: "The VH mode (in-person or online) used in this section is ______.", options: ["In-person", "Online"], required: true, name: 'Q2' });
+                        // FIXED: The "in-person or online" parenthetical has been successfully removed.
+                        q_prompts.push({ prompt: "The VH mode used in this section is ______.", options: ["In-person", "Online"], required: true, name: 'Q2' });
                         correct_answers.push((current_task === 'T3' || current_task === 'T4') ? "In-person" : "Online");
                     }
                 }
