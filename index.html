@@ -58,12 +58,14 @@
 
     const jsPsych = initJsPsych({
         on_finish: function() {
+            // ---> STEP 1: PASTE YOUR DATAPIPE ID HERE <---
             const experiment_id = "YOUR_DATAPIPE_ID_HERE"; 
             
             const filename = `subject_${subject_id}_data.csv`;
             const data_to_save = jsPsych.data.get().csv();
             
             jsPsychPipe.saveData(experiment_id, filename, data_to_save).then(function() {
+                // ---> STEP 2: PASTE YOUR QUALTRICS SURVEY LINK HERE <---
                 const qualtrics_url = "https://yourschool.qualtrics.com/jfe/form/SV_123456789";
                 window.location.href = `${qualtrics_url}?PROLIFIC_PID=${subject_id}&condition=${study_condition}`;
             });
@@ -96,11 +98,11 @@
         let text = "";
         if (study === 'Human') {
             if (module_id.includes('1')) text = "In this module, you will view a series of sequentially presented photos.<br><br>Please follow the instructions provided at the start of each section.";
-            else if (module_id.includes('2')) text = "In this module, you will view photos of other VH participants who, based on the ZIP code you provided in the prescreening survey, live within approximately 30 minutes of your location.<br><br>These participants will attend <strong>in-person VH events</strong>.<br><br>Each section includes its own instructions; please read them carefully before you begin.";
-            else if (module_id.includes('3')) text = "In this module, you will view photos of VH participants who live all across the United States.<br><br>These participants will attend <strong>online VH events</strong>.<br><br>Each section includes its own instructions; please read them carefully before you begin.";
+            else if (module_id.includes('2')) text = "In this module, you will view photos of other VH participants.<br><br>These individuals live within approximately 30 minutes of your location. (They were selected using the ZIP code you provided in the prescreening survey.)<br><br>These participants will attend <strong>in-person VH events</strong>.<br><br>Each section includes its own instructions; please read them carefully before you begin.";
+            else if (module_id.includes('3')) text = "In this module, you will view photos of other VH participants.<br><br>These individuals live all across the United States.<br><br>These participants will attend <strong>online VH events</strong>.<br><br>Each section includes its own instructions; please read them carefully before you begin.";
         } else if (study === 'AI') {
             if (module_id.includes('1')) text = "In this module, you will view a series of sequentially presented AI-generated profiles.<br><br>These digital agents were automatically synthesized from 'oceans' of unfiltered social data across platforms such as Discord, YouTube, and Facebook.<br><br>Please follow the instructions provided at the start of each section.";
-            else if (module_id.includes('2')) text = "In this module, you will view digital profiles generated through an algorithmic synthesis of raw social data from across the United States.<br><br>Because these AI agents were trained on unfiltered online interactions, they reflect the full spectrum of human behavior.<br><br>Think of these proxies as digital mirrors of real-world social dynamics; their temperaments are intentionally unpredictable.<br><br>Each section includes its own instructions. Please read them carefully before you begin.";
+            else if (module_id.includes('2')) text = "In this module, you will view AI-generated digital profiles.<br><br>These agents were trained on massive amounts of real, unfiltered online interactions (such as Discord, YouTube, and Facebook).<br><br>Because of this training, they act as digital mirrors of real-world social dynamics.<br><br>Their behavior ranges from approachable and friendly to distant or even hostile. Their temperaments are intentionally unpredictable.<br><br>You must carefully evaluate the 'vibe' of each agent to determine if they are a suitable match for your social cohort.<br><br>Each section includes its own instructions. Please read them carefully before you begin.";
         }
         return `<div class="instruction-box"><h2 style="text-align:center;">Section ${seq_num}</h2><p>${text}</p><p style="text-align:right; font-size:14px; color:#555;">[${module_id}]</p></div>`;
     }
@@ -404,7 +406,6 @@
                     }
                 });
 
-                // REVISED ALIGNED "IF" SENTENCES (Now correctly flush left)
                 timeline.push({
                     type: jsPsychHtmlKeyboardResponse,
                     stimulus: `
