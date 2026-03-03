@@ -37,7 +37,6 @@
       .practice-banner { position: absolute; top: -40px; left: 50%; transform: translateX(-50%); background-color: #ffffff; color: #000; padding: 5px 20px; font-weight: bold; font-size: 20px; border-radius: 5px; letter-spacing: 2px; white-space: nowrap; }
 
       .instruction-box { text-align: left; max-width: 800px; margin: auto; line-height: 1.6; font-size: 22px; padding: 20px; position: relative; z-index: 10;}
-      .progress-tracker { position: fixed; top: 15px; right: 20px; font-size: 16px; color: #555; font-weight: bold; z-index: 30;}
       
       .jspsych-survey-multi-choice-question { text-align: left; margin-bottom: 30px; font-size: 20px;}
       .jspsych-survey-multi-choice-option { margin-bottom: 10px; }
@@ -471,17 +470,16 @@
             }
 
             trial_counter++; 
-            let progress_html = `<div class="progress-tracker">Section ${seq_module} | Part ${seq_task} | Block ${seq_block}</div>`;
             let w_mark = getWatermark(context_css);
 
-            timeline.push({ type: jsPsychHtmlKeyboardResponse, stimulus: w_mark + progress_html + `<div style="font-size: 80px; color: #555; position: relative; z-index: 20;">+</div>`, choices: "NO_KEYS", trial_duration: 500 });
+            timeline.push({ type: jsPsychHtmlKeyboardResponse, stimulus: w_mark + `<div style="font-size: 80px; color: #555; position: relative; z-index: 20;">+</div>`, choices: "NO_KEYS", trial_duration: 500 });
             
             timeline.push({
                 type: jsPsychHtmlKeyboardResponse,
-                stimulus: w_mark + progress_html + `<div class="stimulus-container"><img src="${row.stimulus}" class="stimulus-image"></div>`,
+                stimulus: w_mark + `<div class="stimulus-container"><img src="${row.stimulus}" class="stimulus-image"></div>`,
                 choices: ['t', ' '], 
                 data: { is_practice: false, task_id: row.task_id, module_id: row.module_id, block_id: row.block_id, is_target: row.is_target, intensity: row.intensity, condition: study_condition },
-                on_finish: function(data) { data.feedback_html = w_mark + progress_html + `<div class="stimulus-container">${calculateFeedback(data.is_target, data.response, data.intensity, row.stimulus)}</div>`; }
+                on_finish: function(data) { data.feedback_html = w_mark + `<div class="stimulus-container">${calculateFeedback(data.is_target, data.response, data.intensity, row.stimulus)}</div>`; }
             });
 
             timeline.push({ type: jsPsychHtmlKeyboardResponse, stimulus: function() { return jsPsych.data.get().last(1).values()[0].feedback_html; }, choices: "NO_KEYS", trial_duration: 1500 });
