@@ -126,12 +126,13 @@
         return `<div style="font-size: 40px; font-weight: bold; text-align: center; margin: 50px 0; color: #ffffff;">${formula}</div>`;
     }
 
+    // PERFECTED TASK LOGIC: T3 and T4 are now fully supported in the AI condition
     function getTaskTargetText(study, task_id) {
         if (study === 'AI') {
             if (task_id === 'T1') return `In this task, your target is any AI-generated face that makes you feel <strong>good, warm, or friendly</strong>.`;
             if (task_id === 'T2') return `In this task, your target is any AI-generated face that makes you feel <strong>bad, uneasy, or threatened</strong>.`;
-            if (task_id === 'T5') return `For this task, targets are any AI-agent you would <strong>like to interact or team up with</strong> for your VH sessions.`;
-            if (task_id === 'T6') return `For this task, targets are any AI-agent you would <strong>avoid interacting or teaming up with</strong> for your VH sessions.`;
+            if (task_id === 'T3' || task_id === 'T5') return `For this task, targets are any AI-agent you would <strong>like to interact or team up with</strong> for your VH sessions.`;
+            if (task_id === 'T4' || task_id === 'T6') return `For this task, targets are any AI-agent you would <strong>avoid interacting or teaming up with</strong> for your VH sessions.`;
         } else {
             if (task_id === 'T1') return `In this task, your target is any face that makes you feel <strong>good, warm, or friendly</strong>.`;
             if (task_id === 'T2') return `In this task, your target is any face that makes you feel <strong>bad, uneasy, or threatened</strong>.`;
@@ -140,7 +141,7 @@
             if (task_id === 'T5') return `For this task, targets are any individuals you would <strong>like to interact or team up with</strong> for your VH sessions.`;
             if (task_id === 'T6') return `For this task, targets are any individuals you would <strong>avoid interacting or teaming up with</strong> for your VH sessions.`;
         }
-        return "Please follow the instructions carefully.";
+        return "Please follow the instructions carefully."; 
     }
 
     function calculateFeedback(is_target, response_key, filename_intensity) {
