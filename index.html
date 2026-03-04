@@ -91,7 +91,6 @@
         return `<div class="${context}" style="position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 400px; height: 400px; z-index: 0; pointer-events: none;"></div>`;
     }
 
-    // UPDATED: Now returns an ARRAY of pages so we can split the text dynamically
     function getModuleIntroPages(study, module_id, seq_num) {
         let pages = [];
         let header = `<h2 style="text-align:center;">Section ${seq_num}</h2>`;
@@ -108,15 +107,13 @@
         } else if (study === 'AI') {
             if (module_id.includes('1')) {
                 pages.push(`In this module, you will view a series of sequentially presented AI-generated profiles.<br><br>These digital agents were automatically synthesized from 'oceans' of unfiltered social data across platforms such as Discord, YouTube, and Facebook.<br><br>Please follow the instructions provided at the start of each section.`);
-            } else if (module_id.includes('2') || module_id.includes('3')) { // Catches M2 and M3 to prevent blank screens
-                // SPLIT INTO 3 PAGES
+            } else if (module_id.includes('2') || module_id.includes('3')) { 
                 pages.push(`In this module, you will view AI-generated digital profiles. They are the VH participants.<br><br>These agents were trained on massive amounts of real, unfiltered online interactions (such as Discord, YouTube, and Facebook).`);
-                pages.push(`Because of this training, they act as digital mirrors of real-world social dynamics.<br><br>Their behavior ranges from approachable and friendly to distant or even hostile. Their temperaments are intentionally unpredictable.`);
+                pages.push(`Because of this training, they act as digital mirrors of real-world social dynamics.<br><br>Their behavior ranges from "friendly" to "hostile". Their temperaments are unpredictable.`);
                 pages.push(`You must carefully evaluate the 'vibe' of each agent to determine if they are a suitable match for your social cohort.<br><br>Each section includes its own instructions. Please read them carefully before you begin.`);
             }
         }
         
-        // Wrap all pages in the standard instruction box container
         return pages.map(text => `<div class="instruction-box">${header}<p>${text}</p>${footer}</div>`);
     }
 
@@ -294,11 +291,9 @@
                 }
                 current_module = row.module_id;
 
-                // MULTI-PAGE MODULE INTRO HANDLING
                 let intro_pages = getModuleIntroPages(study_condition, current_module, seq_module);
                 
                 intro_pages.forEach((page_html, index) => {
-                    // 15 seconds for single pages, 5 seconds per page for multi-pages
                     let timer_seconds = (intro_pages.length > 1) ? 5 : 15; 
                     
                     timeline.push({
