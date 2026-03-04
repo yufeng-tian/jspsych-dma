@@ -91,24 +91,33 @@
         return `<div class="${context}" style="position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 400px; height: 400px; z-index: 0; pointer-events: none;"></div>`;
     }
 
-    function getModuleIntro(study, module_id, seq_num) {
-        let text = "";
+    // UPDATED: Now returns an ARRAY of pages so we can split the text dynamically
+    function getModuleIntroPages(study, module_id, seq_num) {
+        let pages = [];
+        let header = `<h2 style="text-align:center;">Section ${seq_num}</h2>`;
+        let footer = `<p style="text-align:right; font-size:14px; color:#555;">[${module_id}]</p>`;
+
         if (study === 'Human') {
             if (module_id.includes('1')) {
-                text = "In this module, you will view a series of sequentially presented photos.<br><br>Please follow the instructions provided at the start of each section.";
+                pages.push(`In this module, you will view a series of sequentially presented photos.<br><br>Please follow the instructions provided at the start of each section.`);
             } else if (module_id.includes('2')) {
-                text = "In this module, you will view photos of other VH participants.<br><br>These individuals live within approximately 30 minutes of your location. (They were selected using the ZIP code you provided in the prescreening survey.)<br><br>These participants will attend <strong>in-person VH events</strong>.<br><br>Each section includes its own instructions; please read them carefully before you begin.";
+                pages.push(`In this module, you will view photos of other VH participants.<br><br>These individuals live within approximately 30 minutes of your location. (They were selected using the ZIP code you provided in the prescreening survey.)<br><br>These participants will attend <strong>in-person VH events</strong>.<br><br>Each section includes its own instructions; please read them carefully before you begin.`);
             } else if (module_id.includes('3')) {
-                text = "In this module, you will view photos of other VH participants.<br><br>These individuals live all across the United States.<br><br>These participants will attend <strong>online VH events</strong>.<br><br>Each section includes its own instructions; please read them carefully before you begin.";
+                pages.push(`In this module, you will view photos of other VH participants.<br><br>These individuals live all across the United States.<br><br>These participants will attend <strong>online VH events</strong>.<br><br>Each section includes its own instructions; please read them carefully before you begin.`);
             }
         } else if (study === 'AI') {
             if (module_id.includes('1')) {
-                text = "In this module, you will view a series of sequentially presented AI-generated profiles.<br><br>These digital agents were automatically synthesized from 'oceans' of unfiltered social data across platforms such as Discord, YouTube, and Facebook.<br><br>Please follow the instructions provided at the start of each section.";
-            } else if (module_id.includes('2') || module_id.includes('3')) {
-                text = "In this module, you will view AI-generated digital profiles.<br><br>These agents were trained on massive amounts of real, unfiltered online interactions (such as Discord, YouTube, and Facebook).<br><br>Because of this training, they act as digital mirrors of real-world social dynamics.<br><br>Their behavior ranges from approachable and friendly to distant or even hostile. Their temperaments are intentionally unpredictable.<br><br>You must carefully evaluate the 'vibe' of each agent to determine if they are a suitable match for your social cohort.<br><br>Each section includes its own instructions. Please read them carefully before you begin.";
+                pages.push(`In this module, you will view a series of sequentially presented AI-generated profiles.<br><br>These digital agents were automatically synthesized from 'oceans' of unfiltered social data across platforms such as Discord, YouTube, and Facebook.<br><br>Please follow the instructions provided at the start of each section.`);
+            } else if (module_id.includes('2') || module_id.includes('3')) { // Catches M2 and M3 to prevent blank screens
+                // SPLIT INTO 3 PAGES
+                pages.push(`In this module, you will view AI-generated digital profiles. They are the VH participants.<br><br>These agents were trained on massive amounts of real, unfiltered online interactions (such as Discord, YouTube, and Facebook).`);
+                pages.push(`Because of this training, they act as digital mirrors of real-world social dynamics.<br><br>Their behavior ranges from approachable and friendly to distant or even hostile. Their temperaments are intentionally unpredictable.`);
+                pages.push(`You must carefully evaluate the 'vibe' of each agent to determine if they are a suitable match for your social cohort.<br><br>Each section includes its own instructions. Please read them carefully before you begin.`);
             }
         }
-        return `<div class="instruction-box"><h2 style="text-align:center;">Section ${seq_num}</h2><p>${text}</p><p style="text-align:right; font-size:14px; color:#555;">[${module_id}]</p></div>`;
+        
+        // Wrap all pages in the standard instruction box container
+        return pages.map(text => `<div class="instruction-box">${header}<p>${text}</p>${footer}</div>`);
     }
 
     function getSimplifiedFormula(task_id) {
@@ -285,31 +294,38 @@
                 }
                 current_module = row.module_id;
 
-                // MODULE INTRO WITH 15-SECOND TIMER ADDED
-                timeline.push({
-                    type: jsPsychHtmlButtonResponse,
-                    stimulus: getModuleIntro(study_condition, current_module, seq_module),
-                    choices: ['Continue'],
-                    on_load: function() {
-                        let btn = document.querySelector('.jspsych-btn');
-                        btn.disabled = true;
-                        btn.style.opacity = '0.5';
-                        btn.style.cursor = 'not-allowed';
-                        let countdown = 15;
-                        btn.innerHTML = `Please read carefully... (${countdown})`;
-                        let interval = setInterval(function() {
-                            countdown--;
-                            if(countdown > 0) {
-                                btn.innerHTML = `Please read carefully... (${countdown})`;
-                            } else {
-                                btn.innerHTML = 'Continue';
-                                btn.disabled = false;
-                                btn.style.opacity = '1';
-                                btn.style.cursor = 'pointer';
-                                clearInterval(interval);
-                            }
-                        }, 1000);
-                    }
+                // MULTI-PAGE MODULE INTRO HANDLING
+                let intro_pages = getModuleIntroPages(study_condition, current_module, seq_module);
+                
+                intro_pages.forEach((page_html, index) => {
+                    // 15 seconds for single pages, 5 seconds per page for multi-pages
+                    let timer_seconds = (intro_pages.length > 1) ? 5 : 15; 
+                    
+                    timeline.push({
+                        type: jsPsychHtmlButtonResponse,
+                        stimulus: page_html,
+                        choices: ['Continue'],
+                        on_load: function() {
+                            let btn = document.querySelector('.jspsych-btn');
+                            btn.disabled = true;
+                            btn.style.opacity = '0.5';
+                            btn.style.cursor = 'not-allowed';
+                            let countdown = timer_seconds;
+                            btn.innerHTML = `Please read carefully... (${countdown})`;
+                            let interval = setInterval(function() {
+                                countdown--;
+                                if(countdown > 0) {
+                                    btn.innerHTML = `Please read carefully... (${countdown})`;
+                                } else {
+                                    btn.innerHTML = 'Continue';
+                                    btn.disabled = false;
+                                    btn.style.opacity = '1';
+                                    btn.style.cursor = 'pointer';
+                                    clearInterval(interval);
+                                }
+                            }, 1000);
+                        }
+                    });
                 });
 
                 if (context_css !== "") {
