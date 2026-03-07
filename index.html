@@ -95,6 +95,7 @@
         return `<div class="${context}" style="position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 400px; height: 400px; z-index: 0; pointer-events: none;"></div>`;
     }
 
+    // PERFECTED MODULE INTROS FOR HUMAN AND AI
     function getModuleIntroPages(study, module_id, seq_num) {
         let pages = [];
         let header = `<h2 style="text-align:center;">Section ${seq_num}</h2>`;
@@ -111,10 +112,14 @@
         } else if (study === 'AI') {
             if (module_id.includes('1')) {
                 pages.push(`In this module, you will view a series of sequentially presented AI-generated profiles.<br><br>These digital agents were automatically synthesized from 'oceans' of unfiltered social data across platforms such as Discord, YouTube, and Facebook.<br><br>Please follow the instructions provided at the start of each section.`);
-            } else if (module_id.includes('2') || module_id.includes('3')) { 
+            } else if (module_id.includes('2')) { 
                 pages.push(`In this module, you will view AI-generated digital profiles. They are the VH participants.<br><br>These agents were trained on massive amounts of real, unfiltered online interactions (such as Discord, YouTube, and Facebook).`);
                 pages.push(`Because of this training, they act as digital mirrors of real-world social dynamics.<br><br>Their behavior ranges from "friendly" to "hostile". Their temperaments are unpredictable.`);
-                pages.push(`You must carefully evaluate the 'vibe' of each agent to determine if they are a suitable match for your social cohort.<br><br>Each section includes its own instructions. Please read them carefully before you begin.`);
+                pages.push(`These agents are designated for <strong>high-immersion communication</strong> (featuring full 3D avatars and real-time voice generation).<br><br>You must carefully evaluate the 'vibe' of each agent to determine if they are a suitable match for your social cohort.<br><br>Each section includes its own instructions. Please read them carefully before you begin.`);
+            } else if (module_id.includes('3')) { 
+                pages.push(`In this module, you will view AI-generated digital profiles. They are the VH participants.<br><br>These agents were trained on massive amounts of real, unfiltered online interactions (such as Discord, YouTube, and Facebook).`);
+                pages.push(`Because of this training, they act as digital mirrors of real-world social dynamics.<br><br>Their behavior ranges from "friendly" to "hostile". Their temperaments are unpredictable.`);
+                pages.push(`These agents are designated for <strong>text-based communication</strong> (featuring standard chatrooms and messaging).<br><br>You must carefully evaluate the 'vibe' of each agent to determine if they are a suitable match for your social cohort.<br><br>Each section includes its own instructions. Please read them carefully before you begin.`);
             }
         }
         
@@ -232,14 +237,13 @@
                 }
             });
 
-            // --- TEST MODE AGGRESSIVE TRUNCATION ---
             if (test_mode) {
                 let test_data = [];
                 let block_counts = {};
                 clean_data.forEach(row => {
                     let key = row.module_id + '_' + row.task_id + '_' + row.block_id;
                     if (!block_counts[key]) block_counts[key] = 0;
-                    if (block_counts[key] < 2) { // KEEPS ONLY 2 TRIALS PER BLOCK
+                    if (block_counts[key] < 2) { 
                         test_data.push(row);
                         block_counts[key]++;
                     }
@@ -259,7 +263,6 @@
     function buildExperiment(csv_data) {
         let timeline = [];
 
-        // MASSIVE VISUAL WARNING IF TEST MODE IS ON
         let welcome_html = "<div class='instruction-box' style='text-align:center;'><h2>Task Environment Loaded</h2><p>Click below to enter fullscreen and begin.</p></div>";
         if (test_mode) {
             welcome_html = "<div class='instruction-box' style='text-align:center; border: 3px solid #ff5555; padding: 20px;'><h2 style='color:#ff5555;'>⚠️ TEST MODE ACTIVATED ⚠️</h2><p>Timers are set to 1 second.</p><p>Practice is reduced to 1 trial.</p><p>Blocks are reduced to 2 trials.</p><br><p>Click below to enter fullscreen.</p></div>";
@@ -291,10 +294,9 @@
 
         csv_data.forEach((row) => {
             let context_css = "";
-            if (study_condition === 'Human') {
-                if (row.module_id === 'M2') context_css = "context-inperson";
-                else if (row.module_id === 'M3') context_css = "context-online";
-            }
+            // ENABLED WATERMARKS FOR BOTH HUMAN AND AI CONDITIONS
+            if (row.module_id === 'M2') context_css = "context-inperson";
+            else if (row.module_id === 'M3') context_css = "context-online";
 
             let is_new_module = (row.module_id !== current_module);
             let is_new_task = (row.task_id !== current_task);
@@ -320,7 +322,7 @@
                 
                 intro_pages.forEach((page_html, index) => {
                     let timer_seconds = (intro_pages.length > 1) ? 5 : 15; 
-                    if (test_mode) timer_seconds = 1; // OVERRIDE FOR TEST MODE
+                    if (test_mode) timer_seconds = 1; 
                     
                     timeline.push({
                         type: jsPsychHtmlButtonResponse,
@@ -350,7 +352,14 @@
                 });
 
                 if (context_css !== "") {
-                    let icon_desc = context_css === "context-inperson" ? "an In-Person event" : "an Online event";
+                    let icon_desc = "";
+                    // DYNAMIC ICON DESCRIPTION BASED ON STUDY CONDITION
+                    if (study_condition === 'Human') {
+                        icon_desc = context_css === "context-inperson" ? "an In-Person event" : "an Online event";
+                    } else {
+                        icon_desc = context_css === "context-inperson" ? "a High-Immersion environment" : "a Text-Based environment";
+                    }
+                    
                     let var_name = context_css === "context-inperson" ? "inperson" : "online";
                     timeline.push({
                         type: jsPsychHtmlButtonResponse,
@@ -387,7 +396,7 @@
                         btn.disabled = true;
                         btn.style.opacity = '0.5';
                         btn.style.cursor = 'not-allowed';
-                        let countdown = test_mode ? 1 : 15; // OVERRIDE FOR TEST MODE
+                        let countdown = test_mode ? 1 : 15; 
                         btn.innerHTML = `Please read carefully... (${countdown})`;
                         let interval = setInterval(function() {
                             countdown--;
@@ -423,12 +432,17 @@
                     q_prompts.push({ prompt: "The target in this section is to identify faces that make you feel ______", options: ["good, warm, or friendly", "bad, uneasy, or threatened"], required: true, name: 'Q1' });
                     correct_answers.push(current_task === 'T1' ? "good, warm, or friendly" : "bad, uneasy, or threatened");
                 } else {
-                    q_prompts.push({ prompt: "In this section, a target is a person you would ______ interacting with.", options: ["Like", "Avoid"], required: true, name: 'Q1' });
+                    let target_entity = (study_condition === 'AI') ? "an AI-agent" : "a person";
+                    q_prompts.push({ prompt: `In this section, a target is ${target_entity} you would ______ interacting with.`, options: ["Like", "Avoid"], required: true, name: 'Q1' });
                     correct_answers.push((current_task === 'T3' || current_task === 'T5') ? "Like" : "Avoid");
                     
+                    // NEW DYNAMIC QUIZ LOGIC FOR BOTH CONDITIONS
                     if (study_condition === 'Human') {
                         q_prompts.push({ prompt: "The VH mode used in this section is ______.", options: ["In-person", "Online"], required: true, name: 'Q2' });
                         correct_answers.push((current_task === 'T3' || current_task === 'T4') ? "In-person" : "Online");
+                    } else if (study_condition === 'AI') {
+                        q_prompts.push({ prompt: "The interaction environment for these agents is ______.", options: ["High-immersion", "Text-based"], required: true, name: 'Q2' });
+                        correct_answers.push((current_task === 'T3' || current_task === 'T4') ? "High-immersion" : "Text-based");
                     }
                 }
 
@@ -499,20 +513,19 @@
                     choices: [' ']
                 });
 
-                // USE jsPsych.data FROM INITIAL LOAD TO ENSURE PRACTICE IMAGES ARE AVAILABLE
                 let practice_pool = image_array.map(img => {
                     return {stimulus: img, is_target: '0', task_id: current_task}; 
-                }).slice(0, 10); // Safe fallback pool
+                }).slice(0, 10); 
                 
-                let num_practice = test_mode ? 1 : 5; // REDUCE PRACTICE TO 1 IF IN TEST MODE
+                let num_practice = test_mode ? 1 : 5; 
                 let shuffled_practice = shuffleArray([...csv_data.filter(r => r.task_id === current_task)]).slice(0, num_practice);
                 
-                if (shuffled_practice.length === 0) shuffled_practice = practice_pool.slice(0, num_practice); // Safety net
+                if (shuffled_practice.length === 0) shuffled_practice = practice_pool.slice(0, num_practice); 
 
                 shuffled_practice.forEach((p_row) => {
                     let p_context = "";
-                    if (study_condition === 'Human' && p_row.module_id === 'M2') p_context = "context-inperson";
-                    if (study_condition === 'Human' && p_row.module_id === 'M3') p_context = "context-online";
+                    if (p_row.module_id === 'M2') p_context = "context-inperson";
+                    if (p_row.module_id === 'M3') p_context = "context-online";
 
                     let w_mark = getWatermark(p_context);
                     
