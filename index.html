@@ -23,6 +23,18 @@
             --bg-text: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%233a3a3a'%3E%3Cpath d='M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z'/%3E%3C/svg%3E");
         }
 
+        html,
+        body {
+            background-color: #1a1a1a;
+            color: #ffffff;
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            width: 100%;
+            overflow: hidden;
+        }
+
         .context-online {
             background-image: var(--bg-online);
             background-repeat: no-repeat;
@@ -464,7 +476,8 @@
                         icon_desc = context_css === "context-inperson" ? "a High-Immersion environment" : "a Text-Based environment";
                     }
 
-                    let var_name = context_css === "context-inperson" ? "inperson" : "online";
+                    // THIS IS THE NEW LINE!
+                    let var_name = context_css.replace('context-', '');
                     timeline.push({
                         type: jsPsychHtmlButtonResponse,
                         stimulus: `
