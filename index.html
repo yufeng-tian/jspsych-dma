@@ -425,7 +425,7 @@
                 let intro_pages = getModuleIntroPages(study_condition, current_module, seq_module);
 
                 intro_pages.forEach((page_html, index) => {
-                    let timer_seconds = (intro_pages.length > 1) ? 5 : 15;
+                    let timer_seconds = 10;
                     if (test_mode) timer_seconds = 1;
 
                     timeline.push({
@@ -500,7 +500,7 @@
                         btn.disabled = true;
                         btn.style.opacity = '0.5';
                         btn.style.cursor = 'not-allowed';
-                        let countdown = test_mode ? 1 : 15;
+                        let countdown = test_mode ? 1 : 10;
                         btn.innerHTML = `Please read carefully... (${countdown})`;
                         let interval = setInterval(function () {
                             countdown--;
