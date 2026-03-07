@@ -641,8 +641,12 @@
 
                 shuffled_practice.forEach((p_row) => {
                     let p_context = "";
-                    if (p_row.module_id === 'M2') p_context = "context-inperson";
-                    if (p_row.module_id === 'M3') p_context = "context-online";
+                    if (p_row.module_id === 'M2') {
+                        p_context = "context-inperson";
+                    } else if (p_row.module_id === 'M3') {
+                        // Apply the text icon to practice trials in the AI condition
+                        p_context = (study_condition === 'AI') ? "context-text" : "context-online";
+                    }
 
                     let w_mark = getWatermark(p_context);
 
