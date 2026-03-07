@@ -1,8 +1,9 @@
 <!DOCTYPE html>
 <html>
-  <head>
+
+<head>
     <title>VH Social Perception Study</title>
-    
+
     <script src="https://unpkg.com/jspsych@7.3.4"></script>
     <script src="https://unpkg.com/@jspsych/plugin-html-keyboard-response@1.1.3"></script>
     <script src="https://unpkg.com/@jspsych/plugin-html-button-response@1.1.3"></script>
@@ -10,43 +11,135 @@
     <script src="https://unpkg.com/@jspsych/plugin-preload@1.1.3"></script>
     <script src="https://unpkg.com/@jspsych/plugin-fullscreen@1.1.2"></script>
     <link href="https://unpkg.com/jspsych@7.3.4/css/jspsych.css" rel="stylesheet" type="text/css" />
-    
+
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
     <script src="https://unpkg.com/@jspsych-builder/datapipe@0.1.0"></script>
 
     <style>
-      /* --- Root Variables for SVG Background Watermarks --- */
-      :root {
-        --bg-online: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%233a3a3a'%3E%3Cpath d='M1 9l2 2c4.97-4.97 13.03-4.97 18 0l2-2C16.93 2.93 7.08 2.93 1 9zm8 8l3 3 3-3c-1.65-1.66-4.34-1.66-6 0zm-4-4l2 2c2.76-2.76 7.24-2.76 10 0l2-2C15.14 9.14 8.87 9.14 5 13z'/%3E%3C/svg%3E");
-        --bg-inperson: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%233a3a3a'%3E%3Cpath d='M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z'/%3E%3C/svg%3E");
-      }
+        /* --- Root Variables for SVG Background Watermarks --- */
+        :root {
+            --bg-online: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%233a3a3a'%3E%3Cpath d='M1 9l2 2c4.97-4.97 13.03-4.97 18 0l2-2C16.93 2.93 7.08 2.93 1 9zm8 8l3 3 3-3c-1.65-1.66-4.34-1.66-6 0zm-4-4l2 2c2.76-2.76 7.24-2.76 10 0l2-2C15.14 9.14 8.87 9.14 5 13z'/%3E%3C/svg%3E");
+            --bg-inperson: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%233a3a3a'%3E%3Cpath d='M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z'/%3E%3C/svg%3E");
+        }
 
-      html, body { background-color: #1a1a1a; color: #ffffff; font-family: 'Arial', sans-serif; margin: 0; padding: 0; height: 100%; width: 100%; overflow: hidden; }
-      
-      .context-online { background-image: var(--bg-online); background-repeat: no-repeat; background-size: contain; background-position: center; }
-      .context-inperson { background-image: var(--bg-inperson); background-repeat: no-repeat; background-size: contain; background-position: center; }
+        html,
+        body {
+            background-color: #1a1a1a;
+            color: #ffffff;
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            width: 100%;
+            overflow: hidden;
+        }
 
-      .target-word { color: #00ffcc; font-weight: bold; font-size: 24px; }
-      .avoid-word { color: #ff5555; font-weight: bold; font-size: 24px; }
-      
-      .feedback-number { font-size: 80px; font-weight: bold; color: #ffffff; line-height: 1; margin-bottom: 5px; position: relative; z-index: 20;}
-      .feedback-label { font-size: 24px; color: #cccccc; margin-top: 0px; position: relative; z-index: 20;}
-      
-      .stimulus-container { position: relative; display: inline-block; z-index: 10; }
-      .stimulus-image { max-height: 500px; max-width: 500px; border: 2px solid #333; border-radius: 8px; display: block; }
-      .practice-banner { position: absolute; top: -40px; left: 50%; transform: translateX(-50%); background-color: #ffffff; color: #000; padding: 5px 20px; font-weight: bold; font-size: 20px; border-radius: 5px; letter-spacing: 2px; white-space: nowrap; }
+        .context-online {
+            background-image: var(--bg-online);
+            background-repeat: no-repeat;
+            background-size: contain;
+            background-position: center;
+        }
 
-      .instruction-box { text-align: left; max-width: 800px; margin: auto; line-height: 1.6; font-size: 22px; padding: 20px; position: relative; z-index: 10;}
-      
-      .jspsych-survey-multi-choice-question { text-align: left; margin-bottom: 30px; font-size: 20px;}
-      .jspsych-survey-multi-choice-option { margin-bottom: 10px; }
-      .jspsych-btn { font-size: 18px; padding: 10px 20px; margin-top: 20px;}
+        .context-inperson {
+            background-image: var(--bg-inperson);
+            background-repeat: no-repeat;
+            background-size: contain;
+            background-position: center;
+        }
+
+        .target-word {
+            color: #00ffcc;
+            font-weight: bold;
+            font-size: 24px;
+        }
+
+        .avoid-word {
+            color: #ff5555;
+            font-weight: bold;
+            font-size: 24px;
+        }
+
+        .feedback-number {
+            font-size: 80px;
+            font-weight: bold;
+            color: #ffffff;
+            line-height: 1;
+            margin-bottom: 5px;
+            position: relative;
+            z-index: 20;
+        }
+
+        .feedback-label {
+            font-size: 24px;
+            color: #cccccc;
+            margin-top: 0px;
+            position: relative;
+            z-index: 20;
+        }
+
+        .stimulus-container {
+            position: relative;
+            display: inline-block;
+            z-index: 10;
+        }
+
+        .stimulus-image {
+            max-height: 500px;
+            max-width: 500px;
+            border: 2px solid #333;
+            border-radius: 8px;
+            display: block;
+        }
+
+        .practice-banner {
+            position: absolute;
+            top: -40px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #ffffff;
+            color: #000;
+            padding: 5px 20px;
+            font-weight: bold;
+            font-size: 20px;
+            border-radius: 5px;
+            letter-spacing: 2px;
+            white-space: nowrap;
+        }
+
+        .instruction-box {
+            text-align: left;
+            max-width: 800px;
+            margin: auto;
+            line-height: 1.6;
+            font-size: 22px;
+            padding: 20px;
+            position: relative;
+            z-index: 10;
+        }
+
+        .jspsych-survey-multi-choice-question {
+            text-align: left;
+            margin-bottom: 30px;
+            font-size: 20px;
+        }
+
+        .jspsych-survey-multi-choice-option {
+            margin-bottom: 10px;
+        }
+
+        .jspsych-btn {
+            font-size: 18px;
+            padding: 10px 20px;
+            margin-top: 20px;
+        }
     </style>
-  </head>
-  <body></body>
-  <script>
+</head>
 
-    window.onerror = function(msg, url, lineNo) {
+<body></body>
+<script>
+
+    window.onerror = function (msg, url, lineNo) {
         document.body.innerHTML = `<div style="background-color:#1a1a1a; color:#ff5555; padding:40px; text-align:center; font-family:Arial; height:100vh; width:100vw; z-index:9999; position:absolute;">
             <h2>System Crash Detected</h2>
             <p><strong>${msg}</strong></p>
@@ -58,17 +151,17 @@
     // --- BULLETPROOF URL PARSING ---
     const urlParams = new URLSearchParams(window.location.search);
     const subject_id = urlParams.get('PROLIFIC_PID') || Math.floor(Math.random() * 10000).toString();
-    const study_condition = urlParams.get('condition') || 'Human'; 
+    const study_condition = urlParams.get('condition') || 'Human';
     const test_mode = urlParams.get('testmode') === 'true'; // <--- NATIVE JS TEST MODE GRABBER
 
     const jsPsych = initJsPsych({
-        on_finish: function() {
-            const experiment_id = "YOUR_DATAPIPE_ID_HERE"; 
-            
+        on_finish: function () {
+            const experiment_id = "YOUR_DATAPIPE_ID_HERE";
+
             const filename = `subject_${subject_id}_data.csv`;
             const data_to_save = jsPsych.data.get().csv();
-            
-            jsPsychPipe.saveData(experiment_id, filename, data_to_save).then(function() {
+
+            jsPsychPipe.saveData(experiment_id, filename, data_to_save).then(function () {
                 const qualtrics_url = "https://yourschool.qualtrics.com/jfe/form/SV_123456789";
                 window.location.href = `${qualtrics_url}?PROLIFIC_PID=${subject_id}&condition=${study_condition}`;
             });
@@ -101,28 +194,35 @@
         let header = `<h2 style="text-align:center;">Section ${seq_num}</h2>`;
         let footer = `<p style="text-align:right; font-size:14px; color:#555;">[${module_id}]</p>`;
 
+        // Warning box HTML saved as variables to keep the code clean
+        let humanWarning = `<div style="background-color: #ffeeba; border-left: 5px solid #ffc107; padding: 15px; margin-top: 20px; text-align: left;"><h3 style="color: #856404; margin-top: 0; font-size: 18px;">⚠️ CRITICAL WARNING: COHORT EVALUATION ⚠️</h3><p style="color: #856404; margin-bottom: 0; font-size: 16px;"><strong>Protect your Shared Community Bonus.</strong> The initiative sponsors strictly monitor group cohesion. Only the highest-functioning cohorts will win the generous cash grant. No one likes to affiliate with a hostile or uncooperative partner. Selecting incompatible individuals will actively drag down your group's metrics and cost you the bonus. Choose wisely.</p></div>`;
+
+        let aiWarning = `<div style="background-color: #ffeeba; border-left: 5px solid #ffc107; padding: 15px; margin-top: 20px; text-align: left;"><h3 style="color: #856404; margin-top: 0; font-size: 18px;">⚠️ CRITICAL WARNING: COHORT EVALUATION ⚠️</h3><p style="color: #856404; margin-bottom: 0; font-size: 16px;"><strong>Protect your Shared Community Bonus.</strong> The tech sponsors strictly monitor Human-AI group cohesion. Only the most integrated cohorts will win the generous cash grant. No one likes to interact with a hostile or unpredictable digital agent. Selecting incompatible AI partners will ruin your group's metrics and cost you the bonus. Choose wisely.</p></div>`;
+
         if (study === 'Human') {
             if (module_id.includes('1')) {
                 pages.push(`In this module, you will view a series of sequentially presented photos.<br><br>Please follow the instructions provided at the start of each section.`);
             } else if (module_id.includes('2')) {
-                pages.push(`In this module, you will view photos of other VH participants.<br><br>These individuals live within approximately 30 minutes of your location. (They were selected using the ZIP code you provided in the prescreening survey.)<br><br>These participants will attend <strong>in-person VH events</strong>.<br><br>Each section includes its own instructions; please read them carefully before you begin.`);
+                pages.push(`In this module, you will view photos of other VH participants.<br><br>These individuals live within approximately 30 minutes of your location. (They were selected using the ZIP code you provided in the prescreening survey.)`);
+                pages.push(`These participants are designated for <strong>in-person VH events</strong> (e.g., meeting for coffee, local trivia nights, or face-to-face group discussions).<br><br>You must carefully evaluate the 'vibe' of each person to determine if they are a suitable match for your social cohort.<br><br>Each section includes its own instructions; please read them carefully before you begin.` + humanWarning);
             } else if (module_id.includes('3')) {
-                pages.push(`In this module, you will view photos of other VH participants.<br><br>These individuals live all across the United States.<br><br>These participants will attend <strong>online VH events</strong>.<br><br>Each section includes its own instructions; please read them carefully before you begin.`);
+                pages.push(`In this module, you will view photos of other VH participants.<br><br>These individuals live all across the United States.`);
+                pages.push(`These participants are designated for <strong>online VH events</strong> (e.g., virtual game nights, digital co-working, or online streaming parties).<br><br>You must carefully evaluate the 'vibe' of each person to determine if they are a suitable match for your social cohort.<br><br>Each section includes its own instructions; please read them carefully before you begin.` + humanWarning);
             }
         } else if (study === 'AI') {
             if (module_id.includes('1')) {
                 pages.push(`In this module, you will view a series of sequentially presented AI-generated profiles.<br><br>These digital agents were automatically synthesized from 'oceans' of unfiltered social data across platforms such as Discord, YouTube, and Facebook.<br><br>Please follow the instructions provided at the start of each section.`);
-            } else if (module_id.includes('2')) { 
+            } else if (module_id.includes('2')) {
                 pages.push(`In this module, you will view AI-generated digital profiles. They are the VH participants.<br><br>These agents were trained on massive amounts of real, unfiltered online interactions (such as Discord, YouTube, and Facebook).`);
                 pages.push(`Because of this training, they act as digital mirrors of real-world social dynamics.<br><br>Their behavior ranges from "friendly" to "hostile". Their temperaments are unpredictable.`);
-                pages.push(`These agents are designated for <strong>high-immersion communication</strong> (featuring full 3D avatars and real-time voice generation).<br><br>You must carefully evaluate the 'vibe' of each agent to determine if they are a suitable match for your social cohort.<br><br>Each section includes its own instructions. Please read them carefully before you begin.`);
-            } else if (module_id.includes('3')) { 
+                pages.push(`These agents are designated for <strong>high-immersion communication</strong> (featuring full 3D avatars, real-time voice generation, and facial reactivity).<br><br>You must carefully evaluate the 'vibe' of each agent to determine if they are a suitable match for your Human-AI cohort.<br><br>Each section includes its own instructions. Please read them carefully before you begin.` + aiWarning);
+            } else if (module_id.includes('3')) {
                 pages.push(`In this module, you will view AI-generated digital profiles. They are the VH participants.<br><br>These agents were trained on massive amounts of real, unfiltered online interactions (such as Discord, YouTube, and Facebook).`);
                 pages.push(`Because of this training, they act as digital mirrors of real-world social dynamics.<br><br>Their behavior ranges from "friendly" to "hostile". Their temperaments are unpredictable.`);
-                pages.push(`These agents are designated for <strong>text-based communication</strong> (featuring standard chatrooms and messaging).<br><br>You must carefully evaluate the 'vibe' of each agent to determine if they are a suitable match for your social cohort.<br><br>Each section includes its own instructions. Please read them carefully before you begin.`);
+                pages.push(`These agents are designated purely for <strong>text-based communication</strong> (featuring only profile pictures and generated text in chatrooms; no voice or avatars).<br><br>You must carefully evaluate the 'vibe' of each agent to determine if they are a suitable match for your Human-AI cohort.<br><br>Each section includes its own instructions. Please read them carefully before you begin.` + aiWarning);
             }
         }
-        
+
         return pages.map(text => `<div class="instruction-box">${header}<p>${text}</p>${footer}</div>`);
     }
 
@@ -149,29 +249,29 @@
             if (task_id === 'T5') return `For this task, targets are any individuals you would <strong>like to interact or team up with</strong> for your VH sessions.`;
             if (task_id === 'T6') return `For this task, targets are any individuals you would <strong>avoid interacting or teaming up with</strong> for your VH sessions.`;
         }
-        return "Please follow the instructions carefully."; 
+        return "Please follow the instructions carefully.";
     }
 
     function calculateFeedback(is_target, response_key, filename_intensity) {
         let resp = String(response_key || '').trim().toLowerCase();
-        
+
         let is_correct = false;
         if (String(is_target).trim() === '1' && resp === 't') is_correct = true;
         if (String(is_target).trim() === '0' && (resp === ' ' || resp === 'space' || resp === 'spacebar' || resp === '')) is_correct = true;
-        
+
         let min, max;
         if (is_correct) {
             if (filename_intensity === 'clear') { min = 90; max = 98; }
             else if (filename_intensity === 'subtle') { min = 70; max = 80; }
-            else { min = 55; max = 65; } 
-        } else { 
+            else { min = 55; max = 65; }
+        } else {
             if (filename_intensity === 'clear') { min = 2; max = 10; }
             else if (filename_intensity === 'subtle') { min = 20; max = 30; }
-            else { min = 35; max = 45; } 
+            else { min = 35; max = 45; }
         }
-        
+
         let percent = Math.floor(Math.random() * (max - min + 1)) + min;
-        
+
         return `
             <div class="feedback-number">${percent}%</div>
             <div class="feedback-label">of others agree with you</div>
@@ -192,19 +292,19 @@
        BLOCK 3: FILENAME EXTRACTOR & TIMELINE BUILDER
        ========================================================= */
     Papa.parse(list_path, {
-        download: true, 
-        header: true, 
-        dynamicTyping: true, 
+        download: true,
+        header: true,
+        dynamicTyping: true,
         skipEmptyLines: true,
-        complete: function(results) { 
-            
+        complete: function (results) {
+
             if (!results || !results.data || results.data.length === 0) {
                 document.body.innerHTML = `<div style='color:#ff5555; text-align:center; padding:50px;'><h2>File Not Found</h2><p>Could not load CSV list.</p></div>`;
                 return;
             }
 
             let clean_data = [];
-            
+
             results.data.forEach(row => {
                 let keys = Object.keys(row);
                 let stim_k = keys.find(k => String(k).toLowerCase().includes('stim'));
@@ -212,27 +312,27 @@
                 let task_k = keys.find(k => String(k).toLowerCase().includes('task'));
                 let mod_k = keys.find(k => String(k).toLowerCase().includes('mod'));
                 let block_k = keys.find(k => String(k).toLowerCase().includes('block'));
-                
+
                 if (stim_k && row[stim_k]) {
                     let stimulus_val = String(row[stim_k]).trim();
-                    let base_file = stimulus_val.split('/').pop();       
-                    let prefix = base_file.split('_')[0].toLowerCase();  
-                    let intensity_char = prefix.slice(-1);               
-                    
+                    let base_file = stimulus_val.split('/').pop();
+                    let prefix = base_file.split('_')[0].toLowerCase();
+                    let intensity_char = prefix.slice(-1);
+
                     let derived_intensity = 'neutral';
                     if (intensity_char === 'c') derived_intensity = 'clear';
                     if (intensity_char === 's') derived_intensity = 'subtle';
                     if (base_file.includes('o')) derived_intensity = 'neutral';
-                    
+
                     let clean_row = {
                         stimulus: stimulus_val,
-                        intensity: derived_intensity, 
+                        intensity: derived_intensity,
                         is_target: tar_k ? String(row[tar_k]).trim() : '0',
                         task_id: task_k ? String(row[task_k]).trim() : '',
                         module_id: mod_k ? String(row[mod_k]).trim() : '',
                         block_id: block_k ? String(row[block_k]).trim() : ''
                     };
-                    
+
                     clean_data.push(clean_row);
                 }
             });
@@ -243,7 +343,7 @@
                 clean_data.forEach(row => {
                     let key = row.module_id + '_' + row.task_id + '_' + row.block_id;
                     if (!block_counts[key]) block_counts[key] = 0;
-                    if (block_counts[key] < 2) { 
+                    if (block_counts[key] < 2) {
                         test_data.push(row);
                         block_counts[key]++;
                     }
@@ -256,7 +356,7 @@
                 return;
             }
 
-            buildExperiment(clean_data); 
+            buildExperiment(clean_data);
         }
     });
 
@@ -274,11 +374,11 @@
             button_label: "Enter Fullscreen"
         });
 
-        const total_real_trials = csv_data.length; 
+        const total_real_trials = csv_data.length;
         const image_array = csv_data.map(row => row.stimulus);
-        timeline.push({ 
-            type: jsPsychPreload, 
-            images: image_array, 
+        timeline.push({
+            type: jsPsychPreload,
+            images: image_array,
             message: "<div class='instruction-box' style='text-align:center;'><h2>Loading Task Environment...</h2><p>Downloading visual assets. This may take a minute depending on your internet speed.</p></div>",
             continue_after_error: true
         });
@@ -290,7 +390,7 @@
         let seq_module = 0;
         let seq_task = 0;
         let seq_block = 0;
-        let trial_counter = 0; 
+        let trial_counter = 0;
 
         csv_data.forEach((row) => {
             let context_css = "";
@@ -319,25 +419,25 @@
                 current_module = row.module_id;
 
                 let intro_pages = getModuleIntroPages(study_condition, current_module, seq_module);
-                
+
                 intro_pages.forEach((page_html, index) => {
-                    let timer_seconds = (intro_pages.length > 1) ? 5 : 15; 
-                    if (test_mode) timer_seconds = 1; 
-                    
+                    let timer_seconds = (intro_pages.length > 1) ? 5 : 15;
+                    if (test_mode) timer_seconds = 1;
+
                     timeline.push({
                         type: jsPsychHtmlButtonResponse,
                         stimulus: page_html,
                         choices: ['Continue'],
-                        on_load: function() {
+                        on_load: function () {
                             let btn = document.querySelector('.jspsych-btn');
                             btn.disabled = true;
                             btn.style.opacity = '0.5';
                             btn.style.cursor = 'not-allowed';
                             let countdown = timer_seconds;
                             btn.innerHTML = `Please read carefully... (${countdown})`;
-                            let interval = setInterval(function() {
+                            let interval = setInterval(function () {
                                 countdown--;
-                                if(countdown > 0) {
+                                if (countdown > 0) {
                                     btn.innerHTML = `Please read carefully... (${countdown})`;
                                 } else {
                                     btn.innerHTML = 'Continue';
@@ -359,7 +459,7 @@
                     } else {
                         icon_desc = context_css === "context-inperson" ? "a High-Immersion environment" : "a Text-Based environment";
                     }
-                    
+
                     let var_name = context_css === "context-inperson" ? "inperson" : "online";
                     timeline.push({
                         type: jsPsychHtmlButtonResponse,
@@ -373,8 +473,8 @@
                         choices: ['Continue']
                     });
                 }
-            } 
-            
+            }
+
             else if (is_new_task) {
                 timeline.push({
                     type: jsPsychHtmlKeyboardResponse,
@@ -391,16 +491,16 @@
                     type: jsPsychHtmlButtonResponse,
                     stimulus: `<div class="instruction-box"><h2 style="text-align:center;">Part ${seq_task}</h2><p>${getTaskTargetText(study_condition, current_task)}</p><br><p>Please decide whether each face is a target.</p><p style="text-align:right; font-size:14px; color:#555;">[${current_module} | ${current_task}]</p></div>`,
                     choices: ['Next'],
-                    on_load: function() {
+                    on_load: function () {
                         let btn = document.querySelector('.jspsych-btn');
                         btn.disabled = true;
                         btn.style.opacity = '0.5';
                         btn.style.cursor = 'not-allowed';
-                        let countdown = test_mode ? 1 : 15; 
+                        let countdown = test_mode ? 1 : 15;
                         btn.innerHTML = `Please read carefully... (${countdown})`;
-                        let interval = setInterval(function() {
+                        let interval = setInterval(function () {
                             countdown--;
-                            if(countdown > 0) {
+                            if (countdown > 0) {
                                 btn.innerHTML = `Please read carefully... (${countdown})`;
                             } else {
                                 btn.innerHTML = 'Next';
@@ -427,7 +527,7 @@
 
                 let q_prompts = [];
                 let correct_answers = [];
-                
+
                 if (current_task === 'T1' || current_task === 'T2') {
                     q_prompts.push({ prompt: "The target in this section is to identify faces that make you feel ______", options: ["good, warm, or friendly", "bad, uneasy, or threatened"], required: true, name: 'Q1' });
                     correct_answers.push(current_task === 'T1' ? "good, warm, or friendly" : "bad, uneasy, or threatened");
@@ -435,7 +535,7 @@
                     let target_entity = (study_condition === 'AI') ? "an AI-agent" : "a person";
                     q_prompts.push({ prompt: `In this section, a target is ${target_entity} you would ______ interacting with.`, options: ["Like", "Avoid"], required: true, name: 'Q1' });
                     correct_answers.push((current_task === 'T3' || current_task === 'T5') ? "Like" : "Avoid");
-                    
+
                     // NEW DYNAMIC QUIZ LOGIC FOR BOTH CONDITIONS
                     if (study_condition === 'Human') {
                         q_prompts.push({ prompt: "The VH mode used in this section is ______.", options: ["In-person", "Online"], required: true, name: 'Q2' });
@@ -450,7 +550,7 @@
                     type: jsPsychSurveyMultiChoice,
                     preamble: `<div class="instruction-box" style="text-align:center;"><h2>Please select your answers:</h2></div>`,
                     questions: q_prompts,
-                    on_finish: function(data) {
+                    on_finish: function (data) {
                         let passed = true;
                         try {
                             let ans1 = (data.response && data.response.Q1) ? String(data.response.Q1).trim() : "";
@@ -459,14 +559,14 @@
                                 let ans2 = (data.response && data.response.Q2) ? String(data.response.Q2).trim() : "";
                                 if (ans2 !== correct_answers[1].trim()) passed = false;
                             }
-                        } catch(e) { passed = false; }
+                        } catch (e) { passed = false; }
                         data.passed = passed;
                     }
                 };
 
                 let feedback_screen = {
                     type: jsPsychHtmlButtonResponse,
-                    stimulus: function() {
+                    stimulus: function () {
                         let passed = jsPsych.data.get().last(1).values()[0].passed;
                         if (passed) {
                             return `<div class="instruction-box" style="text-align:center;"><h2 style="color:#00ffcc;">Correct!</h2><p>You may now proceed.</p></div>`;
@@ -474,7 +574,7 @@
                             return `<div class="instruction-box" style="text-align:center; color:#ff5555;"><h2>Incorrect</h2><p>One or more of your answers were incorrect.</p><p>You will now be sent back to re-read the instructions.</p></div>`;
                         }
                     },
-                    choices: function() {
+                    choices: function () {
                         let passed = jsPsych.data.get().last(1).values()[0].passed;
                         return passed ? ['Continue'] : ['Go Back to Instructions'];
                     }
@@ -482,9 +582,9 @@
 
                 timeline.push({
                     timeline: [inst_1, inst_1_5, inst_2, check_screen, feedback_screen],
-                    loop_function: function(data) {
-                        let last_quiz = data.filter({trial_type: 'survey-multi-choice'}).last(1).values()[0];
-                        return last_quiz.passed === false; 
+                    loop_function: function (data) {
+                        let last_quiz = data.filter({ trial_type: 'survey-multi-choice' }).last(1).values()[0];
+                        return last_quiz.passed === false;
                     }
                 });
 
@@ -514,13 +614,13 @@
                 });
 
                 let practice_pool = image_array.map(img => {
-                    return {stimulus: img, is_target: '0', task_id: current_task}; 
-                }).slice(0, 10); 
-                
-                let num_practice = test_mode ? 1 : 5; 
+                    return { stimulus: img, is_target: '0', task_id: current_task };
+                }).slice(0, 10);
+
+                let num_practice = test_mode ? 1 : 5;
                 let shuffled_practice = shuffleArray([...csv_data.filter(r => r.task_id === current_task)]).slice(0, num_practice);
-                
-                if (shuffled_practice.length === 0) shuffled_practice = practice_pool.slice(0, num_practice); 
+
+                if (shuffled_practice.length === 0) shuffled_practice = practice_pool.slice(0, num_practice);
 
                 shuffled_practice.forEach((p_row) => {
                     let p_context = "";
@@ -528,7 +628,7 @@
                     if (p_row.module_id === 'M3') p_context = "context-online";
 
                     let w_mark = getWatermark(p_context);
-                    
+
                     let pb_file = String(p_row.stimulus).split('/').pop();
                     let pb_char = pb_file.split('_')[0].toLowerCase().slice(-1);
                     let pb_int = 'neutral';
@@ -541,9 +641,9 @@
                         type: jsPsychHtmlKeyboardResponse,
                         stimulus: w_mark + `<div class="stimulus-container"><div class="practice-banner">PRACTICE</div><img src="${p_row.stimulus}" class="stimulus-image"></div>`,
                         choices: ['t', ' '], data: { is_practice: true, task_id: p_row.task_id },
-                        on_finish: function(data) { data.feedback_html = w_mark + `<div class="stimulus-container"><div class="practice-banner">PRACTICE</div>${calculateFeedback(p_row.is_target || 0, data.response, pb_int)}</div>`; }
+                        on_finish: function (data) { data.feedback_html = w_mark + `<div class="stimulus-container"><div class="practice-banner">PRACTICE</div>${calculateFeedback(p_row.is_target || 0, data.response, pb_int)}</div>`; }
                     });
-                    timeline.push({ type: jsPsychHtmlKeyboardResponse, stimulus: function() { return jsPsych.data.get().last(1).values()[0].feedback_html; }, choices: "NO_KEYS", trial_duration: test_mode ? 400 : 1500 });
+                    timeline.push({ type: jsPsychHtmlKeyboardResponse, stimulus: function () { return jsPsych.data.get().last(1).values()[0].feedback_html; }, choices: "NO_KEYS", trial_duration: test_mode ? 400 : 1500 });
                 });
 
                 timeline.push({
@@ -562,20 +662,20 @@
                 current_block = row.block_id;
             }
 
-            trial_counter++; 
+            trial_counter++;
             let w_mark = getWatermark(context_css);
 
             timeline.push({ type: jsPsychHtmlKeyboardResponse, stimulus: w_mark + `<div style="font-size: 80px; color: #555; position: relative; z-index: 20;">+</div>`, choices: "NO_KEYS", trial_duration: test_mode ? 200 : 500 });
-            
+
             timeline.push({
                 type: jsPsychHtmlKeyboardResponse,
                 stimulus: w_mark + `<div class="stimulus-container"><img src="${row.stimulus}" class="stimulus-image"></div>`,
-                choices: ['t', ' '], 
+                choices: ['t', ' '],
                 data: { is_practice: false, task_id: row.task_id, module_id: row.module_id, block_id: row.block_id, is_target: row.is_target, intensity: row.intensity, condition: study_condition },
-                on_finish: function(data) { data.feedback_html = w_mark + `<div class="stimulus-container">${calculateFeedback(data.is_target, data.response, data.intensity, row.stimulus)}</div>`; }
+                on_finish: function (data) { data.feedback_html = w_mark + `<div class="stimulus-container">${calculateFeedback(data.is_target, data.response, data.intensity, row.stimulus)}</div>`; }
             });
 
-            timeline.push({ type: jsPsychHtmlKeyboardResponse, stimulus: function() { return jsPsych.data.get().last(1).values()[0].feedback_html; }, choices: "NO_KEYS", trial_duration: test_mode ? 400 : 1500 });
+            timeline.push({ type: jsPsychHtmlKeyboardResponse, stimulus: function () { return jsPsych.data.get().last(1).values()[0].feedback_html; }, choices: "NO_KEYS", trial_duration: test_mode ? 400 : 1500 });
         });
 
         timeline.push({
@@ -586,5 +686,6 @@
 
         jsPsych.run(timeline);
     }
-  </script>
+</script>
+
 </html>
