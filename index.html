@@ -14,6 +14,7 @@
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
     <script src="https://unpkg.com/@jspsych-builder/datapipe@0.1.0"></script>
+    <script src="https://unpkg.com/@jspsych-contrib/plugin-pipe"></script>
 
     <style>
         /* --- Root Variables for SVG Background Watermarks --- */
@@ -699,11 +700,38 @@
             timeline.push({ type: jsPsychHtmlKeyboardResponse, stimulus: function () { return jsPsych.data.get().last(1).values()[0].feedback_html; }, choices: "NO_KEYS", trial_duration: test_mode ? 400 : 1500 });
         });
 
-        timeline.push({
+        // --- OFFICIAL DATAPIPE SAVE CONFIGURATION ---
+        const save_data = {
+            type: jsPsychPipe,
+            action: "save",
+            experiment_id: "lm98uhzwQsfw",
+            filename: () => {
+                return `subject_${subject_id}_data.csv`;
+            },
+            data_string: () => jsPsych.data.get().csv(),
+            on_finish: function () {
+                // REDIRECT TO QUALTRICS
+                // IMPORTANT: Replace 'SV_YOUR_ACTUAL_ID' with your real Qualtrics ID from the survey URL
+                const qualtrics_url = "https://yourschool.qualtrics.com/jfe/form/SV_YOUR_ACTUAL_ID";
+                window.location.href = `${qualtrics_url}?PROLIFIC_PID=${subject_id}&condition=${study_condition}`;
+            }
+        };
+
+        const saving_screen = {
             type: jsPsychHtmlKeyboardResponse,
-            stimulus: `<div class="instruction-box" style="text-align:center;"><h2>Experiment Complete</h2>${getProgressBar(100)}<p>Saving data to secure server...</p><p style="color:#888; font-size:16px;">(Note: This screen will hold until the DataPipe upload is successful, after which you will be redirected to the final survey.)</p></div>`,
-            choices: "NO_KEYS"
-        });
+            stimulus: `
+      <div class="instruction-box" style="text-align:center;">
+        <h2>Experiment Complete</h2>
+        <p>Saving your data to the secure server...</p>
+        <p><em>Please wait. You will be automatically redirected momentarily.</em></p>
+      </div>`,
+            choices: "NO_KEYS",
+            trial_duration: 3500
+        };
+
+        // --- PUSH TO TIMELINE ---
+        timeline.push(saving_screen);
+        timeline.push(save_data);
 
         jsPsych.run(timeline);
     }
