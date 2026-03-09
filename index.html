@@ -705,9 +705,7 @@
             type: jsPsychPipe,
             action: "save",
             experiment_id: "lm98uhzwQsfw",
-            filename: () => {
-                return `subject_${subject_id}_data.csv`;
-            },
+            filename: `subject_${subject_id}_data.csv`,
             data_string: () => jsPsych.data.get().csv(),
             on_finish: function () {
                 // REDIRECT TO QUALTRICS
