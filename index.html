@@ -693,10 +693,10 @@
             filename: `subject_${subject_id}_data.csv`,
             data_string: () => jsPsych.data.get().csv(),
             on_finish: function () {
-                // REDIRECT TO QUALTRICS
-                // IMPORTANT: Replace 'SV_YOUR_ACTUAL_ID' with your real Qualtrics ID from the survey URL
-                const qualtrics_url = "https://yourschool.qualtrics.com/jfe/form/SV_YOUR_ACTUAL_ID";
-                window.location.href = `${qualtrics_url}?PROLIFIC_PID=${subject_id}&condition=${study_condition}`;
+                // TEMPORARILY DISABLED FOR DEBUGGING
+                // const qualtrics_url = "https://yourschool.qualtrics.com/jfe/form/SV_YOUR_ACTUAL_ID";
+                // window.location.href = `${qualtrics_url}?PROLIFIC_PID=${subject_id}&condition=${study_condition}`;
+                console.log("Redirect paused. Check Network/Console for errors!");
             }
         };
 
