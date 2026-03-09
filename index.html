@@ -694,9 +694,8 @@
             data_string: () => jsPsych.data.get().csv(),
             on_finish: function () {
                 // TEMPORARILY DISABLED FOR DEBUGGING
-                // const qualtrics_url = "https://yourschool.qualtrics.com/jfe/form/SV_YOUR_ACTUAL_ID";
-                // window.location.href = `${qualtrics_url}?PROLIFIC_PID=${subject_id}&condition=${study_condition}`;
-                console.log("Redirect paused. Check Network/Console for errors!");
+                const qualtrics_url = "https://yourschool.qualtrics.com/jfe/form/SV_YOUR_ACTUAL_ID";
+                window.location.href = `${qualtrics_url}?PROLIFIC_PID=${subject_id}&condition=${study_condition}`;
             }
         };
 
