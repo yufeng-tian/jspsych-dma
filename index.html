@@ -162,21 +162,7 @@
     const subject_id = urlParams.get('PROLIFIC_PID') || Math.floor(Math.random() * 10000).toString();
     const study_condition = urlParams.get('condition') || 'Human';
     const test_mode = urlParams.get('testmode') === 'true'; // <--- NATIVE JS TEST MODE GRABBER
-
-    const jsPsych = initJsPsych({
-        on_finish: function () {
-            const experiment_id = "YOUR_DATAPIPE_ID_HERE";
-
-            const filename = `subject_${subject_id}_data.csv`;
-            const data_to_save = jsPsych.data.get().csv();
-
-            jsPsychPipe.saveData(experiment_id, filename, data_to_save).then(function () {
-                const qualtrics_url = "https://yourschool.qualtrics.com/jfe/form/SV_123456789";
-                window.location.href = `${qualtrics_url}?PROLIFIC_PID=${subject_id}&condition=${study_condition}`;
-            });
-        }
-    });
-
+    const jsPsych = initJsPsych({});
     const list_num = (parseInt(subject_id.replace(/\D/g, '')) || 1) % 24 + 1;
     const list_path = `lists/list_${String(list_num).padStart(2, '0')}.csv`;
 
