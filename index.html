@@ -689,13 +689,20 @@
         const save_data = {
             type: jsPsychPipe,
             action: "save",
-            experiment_id: "qESL5807tK42", // <-- Just paste the new ID here!
-            filename: `subject_${subject_id}_data.csv`,
+            experiment_id: "qESL5807tK42", 
+            // 1. Names the file dynamically: data_PID_Condition.csv
+            filename: `data_${subject_id}_${study_condition}.csv`, 
             data_string: () => jsPsych.data.get().csv(),
             on_finish: function () {
-                // TEMPORARILY DISABLED FOR DEBUGGING
-                const qualtrics_url = "https://yourschool.qualtrics.com/jfe/form/SV_YOUR_ACTUAL_ID";
-                window.location.href = `${qualtrics_url}?PROLIFIC_PID=${subject_id}&condition=${study_condition}`;
+                // 2. Define the live Qualtrics Landing Pads
+                const human_url = "https://albany.az1.qualtrics.com/jfe/form/SV_8eooCOP0G2ZNBD8";
+                const ai_url = "https://albany.az1.qualtrics.com/jfe/form/SV_bITuLX7JjpSA3hc";
+                
+                // 3. Route the participant based on their condition
+                let target_url = (study_condition === 'AI') ? ai_url : human_url;
+                
+                // 4. Redirect and pass the PROLIFIC_PID to Qualtrics
+                window.location.href = `${target_url}?PROLIFIC_PID=${subject_id}`;
             }
         };
 
