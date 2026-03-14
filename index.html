@@ -709,13 +709,14 @@
         const saving_screen = {
             type: jsPsychHtmlKeyboardResponse,
             stimulus: `
-      <div class="instruction-box" style="text-align:center;">
-        <h2>Experiment Complete</h2>
-        <p>Saving your data to the secure server...</p>
-        <p><em>Please wait. You will be automatically redirected momentarily.</em></p>
-      </div>`,
+            <div class="instruction-box" style="text-align:center; border: 3px solid #ffc107; padding: 30px; border-radius: 8px;">
+                <h2 style="color:#ffc107;">Phase 1 Finished — DO NOT CLOSE THIS PAGE</h2>
+                <p>Your behavioral data is currently being saved to the secure server.</p>
+                <p style="font-size: 24px; font-weight: bold; margin-top: 30px;">You are now being redirected to the Final Survey.</p>
+                <p style="color:#888;"><em>You must complete the final survey to receive your Prolific completion code. Redirecting momentarily...</em></p>
+            </div>`,
             choices: "NO_KEYS",
-            trial_duration: 3500
+            trial_duration: 4500 // Increased slightly to 4.5 seconds so they have time to read the warning
         };
 
         // --- PUSH TO TIMELINE ---
