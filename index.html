@@ -281,20 +281,19 @@
     }
 
     function getTaskTargetText(study, task_id) {
+        let target_desc = "";
         if (study === 'AI') {
-            if (task_id === 'T1') return `In this task, your target is any AI-generated face that makes you feel <strong>good, warm, or friendly</strong>.`;
-            if (task_id === 'T2') return `In this task, your target is any AI-generated face that makes you feel <strong>bad, uneasy, or threatened</strong>.`;
-            if (task_id === 'T3' || task_id === 'T5') return `For this task, targets are any AI-agent you would <strong>like to interact or team up with</strong> for your VH sessions.`;
-            if (task_id === 'T4' || task_id === 'T6') return `For this task, targets are any AI-agent you would <strong>avoid interacting or teaming up with</strong> for your VH sessions.`;
+            if (task_id === 'T1') target_desc = "any AI-generated face that makes you feel <strong>good, warm, or friendly</strong>.";
+            if (task_id === 'T2') target_desc = "any AI-generated face that makes you feel <strong>bad, uneasy, or threatened</strong>.";
+            if (task_id === 'T3' || task_id === 'T5') target_desc = "any AI-agent you would <strong>like to interact or team up with</strong>.";
+            if (task_id === 'T4' || task_id === 'T6') target_desc = "any AI-agent you would <strong>avoid interacting or teaming up with</strong>.";
         } else {
-            if (task_id === 'T1') return `In this task, your target is any face that makes you feel <strong>good, warm, or friendly</strong>.`;
-            if (task_id === 'T2') return `In this task, your target is any face that makes you feel <strong>bad, uneasy, or threatened</strong>.`;
-            if (task_id === 'T3') return `For this task, targets are any individuals you would <strong>like to interact or team up with</strong> for your VH sessions.`;
-            if (task_id === 'T4') return `For this task, targets are any individuals you would <strong>avoid interacting or teaming up with</strong> for your VH sessions.`;
-            if (task_id === 'T5') return `For this task, targets are any individuals you would <strong>like to interact or team up with</strong> for your VH sessions.`;
-            if (task_id === 'T6') return `For this task, targets are any individuals you would <strong>avoid interacting or teaming up with</strong> for your VH sessions.`;
+            if (task_id === 'T1') target_desc = "any face that makes you feel <strong>good, warm, or friendly</strong>.";
+            if (task_id === 'T2') target_desc = "any face that makes you feel <strong>bad, uneasy, or threatened</strong>.";
+            if (task_id === 'T3' || task_id === 'T5') target_desc = "any individual you would <strong>like to interact or team up with</strong>.";
+            if (task_id === 'T4' || task_id === 'T6') target_desc = "any individual you would <strong>avoid interacting or teaming up with</strong>.";
         }
-        return "Please follow the instructions carefully.";
+        return `In this task, your goal is to identify targets.<br><br>A target is ${target_desc}`;
     }
 
     function calculateFeedback(is_target, response_key, filename_intensity) {
@@ -530,60 +529,68 @@
                 let intro_pages = getModuleIntroPages(study_condition, current_module, seq_module);
 
                 intro_pages.forEach((page_html, index) => {
-                    let timer_seconds = 10;
-                    if (test_mode) timer_seconds = 1;
-
+                    let waitTime = test_mode ? 1000 : 10000;
                     timeline.push({
-                        type: jsPsychHtmlButtonResponse,
-                        stimulus: page_html,
-                        choices: ['Continue'],
-                        on_load: function () {
-                            let btn = document.querySelector('.jspsych-btn');
-                            btn.disabled = true;
-                            btn.style.opacity = '0.5';
-                            btn.style.cursor = 'not-allowed';
-                            let countdown = timer_seconds;
-                            btn.innerHTML = `Please read carefully... (${countdown})`;
-                            let interval = setInterval(function () {
-                                countdown--;
-                                if (countdown > 0) {
-                                    btn.innerHTML = `Please read carefully... (${countdown})`;
-                                } else {
-                                    btn.innerHTML = 'Continue';
-                                    btn.disabled = false;
-                                    btn.style.opacity = '1';
-                                    btn.style.cursor = 'pointer';
-                                    clearInterval(interval);
-                                }
-                            }, 1000);
+                        type: jsPsychHtmlKeyboardResponse,
+                        stimulus: function() {
+                            return page_html.replace('</div>', `
+                                <div id="spacebar-prompt-intro-${index}" style="display:none; text-align:center; margin-top: 40px; color:#00ffcc; font-size: 22px; font-weight:bold; animation: pulse 2s infinite;">
+                                    Press the SPACEBAR to continue.
+                                </div>
+                            </div>`);
+                        },
+                        choices: "NO_KEYS",
+                        on_load: function() {
+                            setTimeout(function() {
+                                let prompt = document.getElementById(`spacebar-prompt-intro-${index}`);
+                                if(prompt) prompt.style.display = 'block';
+                                jsPsych.pluginAPI.getKeyboardResponse({
+                                    callback_function: jsPsych.finishTrial,
+                                    valid_responses: [' '], rt_method: 'performance', persist: false, allow_held_key: false
+                                });
+                            }, waitTime);
                         }
                     });
                 });
 
                 if (context_css !== "") {
                     let icon_desc = "";
-                    // DYNAMIC ICON DESCRIPTION BASED ON STUDY CONDITION
                     if (study_condition === 'Human') {
                         icon_desc = context_css === "context-inperson" ? "an In-Person event" : "an Online event";
                     } else {
                         icon_desc = context_css === "context-inperson" ? "a High-Immersion environment" : "a Text-Based environment";
                     }
 
-                    // THIS IS THE NEW LINE!
                     let var_name = context_css.replace('context-', '');
+                    let waitTime = test_mode ? 1000 : 8000;
+                    
                     timeline.push({
-                        type: jsPsychHtmlButtonResponse,
-                        stimulus: `
-                        <div class="instruction-box" style="text-align:center;">
-                            <h2>Context Watermark</h2>
-                            <p>During this section, an icon will appear in the center of the background.</p>
-                            <div style="width: 200px; height: 200px; margin: 30px auto; background-image: var(--bg-${var_name}); background-size: contain; background-repeat: no-repeat; background-position: center;"></div>
-                            <p>This icon indicates that the Vibe Hang session will happen <strong>${icon_desc}</strong>.</p>
-                        </div>`,
-                        choices: ['Continue']
+                        type: jsPsychHtmlKeyboardResponse,
+                        stimulus: function() {
+                            return `
+                            <div class="instruction-box" style="text-align:center;">
+                                <h2>Context Watermark</h2>
+                                <p>During this section, an icon will appear in the center of the background.</p>
+                                <div style="width: 200px; height: 200px; margin: 30px auto; background-image: var(--bg-${var_name}); background-size: contain; background-repeat: no-repeat; background-position: center;"></div>
+                                <p>This icon indicates that the Vibe Hang session will happen <strong>${icon_desc}</strong>.</p>
+                                <div id="spacebar-prompt-wm" style="display:none; text-align:center; margin-top: 40px; color:#00ffcc; font-size: 22px; font-weight:bold; animation: pulse 2s infinite;">
+                                    Press the SPACEBAR to continue.
+                                </div>
+                            </div>`;
+                        },
+                        choices: "NO_KEYS",
+                        on_load: function() {
+                            setTimeout(function() {
+                                let prompt = document.getElementById('spacebar-prompt-wm');
+                                if(prompt) prompt.style.display = 'block';
+                                jsPsych.pluginAPI.getKeyboardResponse({
+                                    callback_function: jsPsych.finishTrial,
+                                    valid_responses: [' '], rt_method: 'performance', persist: false, allow_held_key: false
+                                });
+                            }, waitTime);
+                        }
                     });
                 }
-            }
 
             else if (is_new_task) {
                 timeline.push(getTimedRest(20, "Part Complete", "Take a brief moment to look away from the screen and rest your eyes."));
@@ -593,42 +600,71 @@
                 current_task = row.task_id;
                 current_block = row.block_id;
 
+                let waitTime = test_mode ? 1000 : 10000;
+
                 let inst_1 = {
-                    type: jsPsychHtmlButtonResponse,
-                    stimulus: `<div class="instruction-box"><h2 style="text-align:center;">Part ${seq_task}</h2><p>${getTaskTargetText(study_condition, current_task)}</p><br><p>Please decide whether each face is a target.</p><p style="text-align:right; font-size:14px; color:#555;">[${current_module} | ${current_task}]</p></div>`,
-                    choices: ['Next'],
-                    on_load: function () {
-                        let btn = document.querySelector('.jspsych-btn');
-                        btn.disabled = true;
-                        btn.style.opacity = '0.5';
-                        btn.style.cursor = 'not-allowed';
-                        let countdown = test_mode ? 1 : 10;
-                        btn.innerHTML = `Please read carefully... (${countdown})`;
-                        let interval = setInterval(function () {
-                            countdown--;
-                            if (countdown > 0) {
-                                btn.innerHTML = `Please read carefully... (${countdown})`;
-                            } else {
-                                btn.innerHTML = 'Next';
-                                btn.disabled = false;
-                                btn.style.opacity = '1';
-                                btn.style.cursor = 'pointer';
-                                clearInterval(interval);
-                            }
-                        }, 1000);
+                    type: jsPsychHtmlKeyboardResponse,
+                    stimulus: function() {
+                        return `
+                        <div class="instruction-box" style="text-align:center;">
+                            <h2>Part ${seq_task}</h2>
+                            <p style="font-size: 22px;">${getTaskTargetText(study_condition, current_task)}</p>
+                            
+                            <div style="background-color: #2a2a2a; border-radius: 10px; padding: 25px; margin: 40px auto; width: 80%; border-left: 5px solid #00ffcc;">
+                                <div style="font-size: 26px; margin-bottom: 20px;">
+                                    Target = Press <strong>T</strong> to <strong style="color:#00ffcc;">TAG</strong>
+                                </div>
+                                <div style="font-size: 26px; color: #bbbbbb;">
+                                    Not a Target = Press <strong>SPACEBAR</strong> to <strong style="color:#ffc107;">SKIP</strong>
+                                </div>
+                            </div>
+
+                            <p style="font-size: 20px; color:#cccccc;">
+                                Rest one finger on the <strong>SPACE BAR</strong>, and another finger on the <strong>T</strong> key.
+                            </p>
+
+                            <div id="spacebar-prompt-inst1" style="display:none; text-align:center; margin-top: 40px; color:#00ffcc; font-size: 22px; font-weight:bold; animation: pulse 2s infinite;">
+                                Press the SPACEBAR to continue.
+                            </div>
+                            <p style="text-align:right; font-size:14px; color:#555; margin-top: 20px;">[${current_module} | ${current_task}]</p>
+                        </div>`;
+                    },
+                    choices: "NO_KEYS",
+                    on_load: function() {
+                        setTimeout(function() {
+                            let prompt = document.getElementById('spacebar-prompt-inst1');
+                            if(prompt) prompt.style.display = 'block';
+                            jsPsych.pluginAPI.getKeyboardResponse({
+                                callback_function: jsPsych.finishTrial,
+                                valid_responses: [' '], rt_method: 'performance', persist: false, allow_held_key: false
+                            });
+                        }, waitTime);
                     }
                 };
 
-                let inst_1_5 = {
-                    type: jsPsychHtmlButtonResponse,
-                    stimulus: `<div class="instruction-box"><h2 style="text-align:center;">Target Reminder</h2>${getSimplifiedFormula(current_task)}</div>`,
-                    choices: ['Continue to Feedback Rules']
-                };
-
                 let inst_2 = {
-                    type: jsPsychHtmlButtonResponse,
-                    stimulus: `<div class="instruction-box"><p>On each trial, you will receive social feedback indicating how many other participants agreed with your decision.</p></div>`,
-                    choices: ['Continue to Comprehension Check']
+                    type: jsPsychHtmlKeyboardResponse,
+                    stimulus: function() {
+                        return `
+                        <div class="instruction-box" style="text-align:center;">
+                            <h2>Social Feedback</h2>
+                            <p style="font-size: 22px;">On each trial, you will receive social feedback indicating how many other participants agreed with your decision.</p>
+                            <div id="spacebar-prompt-inst2" style="display:none; text-align:center; margin-top: 40px; color:#00ffcc; font-size: 22px; font-weight:bold; animation: pulse 2s infinite;">
+                                Press the SPACEBAR to proceed to the Comprehension Check.
+                            </div>
+                        </div>`;
+                    },
+                    choices: "NO_KEYS",
+                    on_load: function() {
+                        setTimeout(function() {
+                            let prompt = document.getElementById('spacebar-prompt-inst2');
+                            if(prompt) prompt.style.display = 'block';
+                            jsPsych.pluginAPI.getKeyboardResponse({
+                                callback_function: jsPsych.finishTrial,
+                                valid_responses: [' '], rt_method: 'performance', persist: false, allow_held_key: false
+                            });
+                        }, waitTime / 2); // Half wait time for shorter text
+                    }
                 };
 
                 let q_prompts = [];
@@ -642,7 +678,6 @@
                     q_prompts.push({ prompt: `In this section, a target is ${target_entity} you would ______ interacting with.`, options: ["Like", "Avoid"], required: true, name: 'Q1' });
                     correct_answers.push((current_task === 'T3' || current_task === 'T5') ? "Like" : "Avoid");
 
-                    // NEW DYNAMIC QUIZ LOGIC FOR BOTH CONDITIONS
                     if (study_condition === 'Human') {
                         q_prompts.push({ prompt: "The VH mode used in this section is ______.", options: ["In-person", "Online"], required: true, name: 'Q2' });
                         correct_answers.push((current_task === 'T3' || current_task === 'T4') ? "In-person" : "Online");
@@ -671,52 +706,26 @@
                 };
 
                 let feedback_screen = {
-                    type: jsPsychHtmlButtonResponse,
+                    type: jsPsychHtmlKeyboardResponse,
                     stimulus: function () {
                         let passed = jsPsych.data.get().last(1).values()[0].passed;
                         if (passed) {
-                            return `<div class="instruction-box" style="text-align:center;"><h2 style="color:#00ffcc;">Correct!</h2><p>You may now proceed.</p></div>`;
+                            return `<div class="instruction-box" style="text-align:center;"><h2 style="color:#00ffcc;">Correct!</h2><p>You may now proceed.</p>
+                            <div style="text-align:center; margin-top: 40px; color:#00ffcc; font-size: 22px; font-weight:bold; animation: pulse 2s infinite;">Press the SPACEBAR to begin Practice Trials.</div></div>`;
                         } else {
-                            return `<div class="instruction-box" style="text-align:center; color:#ff5555;"><h2>Incorrect</h2><p>One or more of your answers were incorrect.</p><p>You will now be sent back to re-read the instructions.</p></div>`;
+                            return `<div class="instruction-box" style="text-align:center; color:#ff5555;"><h2>Incorrect</h2><p>One or more of your answers were incorrect.</p><p>You will now be sent back to re-read the instructions.</p>
+                            <div style="text-align:center; margin-top: 40px; color:#ffc107; font-size: 22px; font-weight:bold; animation: pulse 2s infinite;">Press the SPACEBAR to Go Back.</div></div>`;
                         }
                     },
-                    choices: function () {
-                        let passed = jsPsych.data.get().last(1).values()[0].passed;
-                        return passed ? ['Continue'] : ['Go Back to Instructions'];
-                    }
+                    choices: [' ']
                 };
 
                 timeline.push({
-                    timeline: [inst_1, inst_1_5, inst_2, check_screen, feedback_screen],
+                    timeline: [inst_1, inst_2, check_screen, feedback_screen],
                     loop_function: function (data) {
                         let last_quiz = data.filter({ trial_type: 'survey-multi-choice' }).last(1).values()[0];
                         return last_quiz.passed === false;
                     }
-                });
-
-                timeline.push({
-                    type: jsPsychHtmlKeyboardResponse,
-                    stimulus: `
-                    <div class="instruction-box" style="text-align:center;">
-                        
-                        <div style="display: flex; justify-content: center; margin-bottom: 40px;">
-                            <div style="text-align: left; font-size: 26px; line-height: 1.8;">
-                                If you identify a target, press the <strong>T</strong> key.<br>
-                                If not, press the <strong>SPACE BAR</strong> to pass.
-                            </div>
-                        </div>
-                        
-                        <p>Rest one finger on the <strong>SPACE BAR</strong>, and another finger on the <strong>T</strong> key.</p>
-                        
-                        <p style="color:#888; font-size: 18px; margin-top: 40px;">Press the SPACE BAR to continue.</p>
-                    </div>`,
-                    choices: [' ']
-                });
-
-                timeline.push({
-                    type: jsPsychHtmlKeyboardResponse,
-                    stimulus: `<div class="instruction-box" style="text-align:center;"><h2>Practice Trials</h2><p>You will now complete practice trials.</p><br><p style="color:#888; font-size: 18px;">Press the SPACE BAR to begin.</p></div>`,
-                    choices: [' ']
                 });
 
                 let practice_pool = image_array.map(img => {
