@@ -141,6 +141,53 @@
             padding: 10px 20px;
             margin-top: 20px;
         }
+
+        /* --- Filling Circle Timer Styles --- */
+        .timer-container {
+            margin: 30px auto;
+            text-align: center;
+        }
+
+        .timer-circle {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            background: conic-gradient(#00ffcc 0%, #333 0%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 20px auto;
+            position: relative;
+            box-shadow: 0 0 15px rgba(0, 255, 204, 0.2);
+        }
+
+        .timer-circle::before {
+            content: "";
+            position: absolute;
+            width: 130px;
+            height: 130px;
+            background-color: #1a1a1a;
+            border-radius: 50%;
+        }
+
+        .timer-text {
+            position: relative;
+            font-size: 32px;
+            font-weight: bold;
+            color: #00ffcc;
+        }
+        .timer-text {
+            position: relative;
+            font-size: 32px;
+            font-weight: bold;
+            color: #00ffcc;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 0.4; transform: scale(0.98); }
+            50% { opacity: 1; transform: scale(1.02); }
+            100% { opacity: 0.4; transform: scale(0.98); }
+        }
     </style>
 </head>
 
@@ -285,6 +332,70 @@
             <p style="color: #888; font-size: 16px; margin-top: 10px;">Experiment Progress: ${percent}% Complete</p>
         </div>`;
     }
+    // Helper function to create a timed rest trial + manual continue
+    function getTimedRest(duration, title, subtext) {
+        let actual_duration = test_mode ? 1 : duration; // Fast-forward for test mode
+
+        // Screen 1: The forced timer (NO_KEYS allowed)
+        let timer_trial = {
+            type: jsPsychHtmlKeyboardResponse,
+            stimulus: function () {
+                return `
+                <div class="instruction-box" style="text-align:center;">
+                    <h2 style="color: #00ffcc;">${title}</h2>
+                    <p style="font-size: 20px;">${subtext}</p>
+                    <div class="timer-container">
+                        <div class="timer-circle" id="timer-circle">
+                            <span class="timer-text" id="timer-text">${actual_duration}s</span>
+                        </div>
+                    </div>
+                    <p style="color:#888; font-size: 16px;">Please wait for the timer to complete...</p>
+                </div>`;
+            },
+            choices: "NO_KEYS",
+            trial_duration: actual_duration * 1000,
+            on_load: function () {
+                const startTime = Date.now();
+                const totalMs = actual_duration * 1000;
+
+                const interval = setInterval(function () {
+                    const elapsed = Date.now() - startTime;
+                    const percent = Math.min((elapsed / totalMs) * 100, 100);
+                    const remaining = Math.max(Math.ceil((totalMs - elapsed) / 1000), 0);
+
+                    const circle = document.getElementById('timer-circle');
+                    const text = document.getElementById('timer-text');
+
+                    if (circle) circle.style.background = `conic-gradient(#00ffcc ${percent}%, #333 0%)`;
+                    if (text) text.innerText = remaining + 's';
+
+                    if (elapsed >= totalMs) clearInterval(interval);
+                }, 50);
+            }
+        };
+
+        // Screen 2: The manual continue (Waits for SPACE BAR)
+        let continue_trial = {
+            type: jsPsychHtmlKeyboardResponse,
+            stimulus: function () {
+                return `
+                <div class="instruction-box" style="text-align:center;">
+                    <h2 style="color: #00ffcc;">${title}</h2>
+                    <p style="font-size: 20px;">${subtext}</p>
+                    <div class="timer-container">
+                        <div class="timer-circle" style="background: conic-gradient(#00ffcc 100%, #333 0%); box-shadow: 0 0 25px rgba(0, 255, 204, 0.6);">
+                            <span class="timer-text" style="font-size: 24px;">READY</span>
+                        </div>
+                    </div>
+                    <p style="color:#ffffff; font-size: 22px; font-weight: bold; margin-top: 30px; animation: pulse 2s infinite;">Press the SPACE BAR to resume.</p>
+                </div>`;
+            },
+            choices: [' ']
+        };
+
+        // Returns them as a sequence
+        return { timeline: [timer_trial, continue_trial] };
+    }
 
     /* =========================================================
        BLOCK 3: FILENAME EXTRACTOR & TIMELINE BUILDER
@@ -412,11 +523,7 @@
 
             if (is_new_module) {
                 if (current_module !== null) {
-                    timeline.push({
-                        type: jsPsychHtmlKeyboardResponse,
-                        stimulus: `<div class='instruction-box' style='text-align:center;'><h2>Section Complete.</h2><p>Take a short break if needed.</p><br><p style='color:#888;'>Press SPACE BAR to continue.</p>${getProgressBar(current_percent)}</div>`,
-                        choices: [' ']
-                    });
+                    timeline.push(getTimedRest(30, "Section Complete", "Please take a moment to stretch, drink some water, or look at the outside scenery."));
                 }
                 current_module = row.module_id;
 
@@ -479,11 +586,7 @@
             }
 
             else if (is_new_task) {
-                timeline.push({
-                    type: jsPsychHtmlKeyboardResponse,
-                    stimulus: `<div class='instruction-box' style='text-align:center;'><h2>Part Complete.</h2><p>Take a brief moment to rest your eyes before the next section begins.</p><br><p style='color:#888;'>Press SPACE BAR to continue.</p>${getProgressBar(current_percent)}</div>`,
-                    choices: [' ']
-                });
+                timeline.push(getTimedRest(20, "Part Complete", "Take a brief moment to look away from the screen and rest your eyes."));
             }
 
             if (is_new_task) {
@@ -661,11 +764,7 @@
             }
 
             if (is_new_block && !is_new_task && !is_new_module) {
-                timeline.push({
-                    type: jsPsychHtmlKeyboardResponse,
-                    stimulus: `<div class='instruction-box' style='text-align:center;'><h2>Block Complete.</h2><p>Take a quick stretch.</p><br><p style='color:#888;'>Press SPACE BAR when you are ready to continue.</p>${getProgressBar(current_percent)}</div>`,
-                    choices: [' ']
-                });
+                timeline.push(getTimedRest(10, "Quick Rest", "Roll your shoulders and relax your hands for a moment."));
                 current_block = row.block_id;
             }
 
@@ -689,18 +788,18 @@
         const save_data = {
             type: jsPsychPipe,
             action: "save",
-            experiment_id: "qESL5807tK42", 
+            experiment_id: "qESL5807tK42",
             // 1. Names the file dynamically: data_PID_Condition.csv
-            filename: `data_${subject_id}_${study_condition}.csv`, 
+            filename: `data_${subject_id}_${study_condition}.csv`,
             data_string: () => jsPsych.data.get().csv(),
             on_finish: function () {
                 // 2. Define the live Qualtrics Landing Pads
                 const human_url = "https://albany.az1.qualtrics.com/jfe/form/SV_8eooCOP0G2ZNBD8";
                 const ai_url = "https://albany.az1.qualtrics.com/jfe/form/SV_bITuLX7JjpSA3hc";
-                
+
                 // 3. Route the participant based on their condition
                 let target_url = (study_condition === 'AI') ? ai_url : human_url;
-                
+
                 // 4. Redirect and pass the PROLIFIC_PID to Qualtrics
                 window.location.href = `${target_url}?PROLIFIC_PID=${subject_id}`;
             }
