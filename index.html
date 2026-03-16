@@ -176,6 +176,7 @@
             font-weight: bold;
             color: #00ffcc;
         }
+
         .timer-text {
             position: relative;
             font-size: 32px;
@@ -184,9 +185,20 @@
         }
 
         @keyframes pulse {
-            0% { opacity: 0.4; transform: scale(0.98); }
-            50% { opacity: 1; transform: scale(1.02); }
-            100% { opacity: 0.4; transform: scale(0.98); }
+            0% {
+                opacity: 0.4;
+                transform: scale(0.98);
+            }
+
+            50% {
+                opacity: 1;
+                transform: scale(1.02);
+            }
+
+            100% {
+                opacity: 0.4;
+                transform: scale(0.98);
+            }
         }
     </style>
 </head>
@@ -532,7 +544,7 @@
                     let waitTime = test_mode ? 1000 : 10000;
                     timeline.push({
                         type: jsPsychHtmlKeyboardResponse,
-                        stimulus: function() {
+                        stimulus: function () {
                             return page_html.replace('</div>', `
                                 <div id="spacebar-prompt-intro-${index}" style="display:none; text-align:center; margin-top: 40px; color:#00ffcc; font-size: 22px; font-weight:bold; animation: pulse 2s infinite;">
                                     Press the SPACEBAR to continue.
@@ -540,10 +552,10 @@
                             </div>`);
                         },
                         choices: "NO_KEYS",
-                        on_load: function() {
-                            setTimeout(function() {
+                        on_load: function () {
+                            setTimeout(function () {
                                 let prompt = document.getElementById(`spacebar-prompt-intro-${index}`);
-                                if(prompt) prompt.style.display = 'block';
+                                if (prompt) prompt.style.display = 'block';
                                 jsPsych.pluginAPI.getKeyboardResponse({
                                     callback_function: jsPsych.finishTrial,
                                     valid_responses: [' '], rt_method: 'performance', persist: false, allow_held_key: false
@@ -563,10 +575,10 @@
 
                     let var_name = context_css.replace('context-', '');
                     let waitTime = test_mode ? 1000 : 8000;
-                    
+
                     timeline.push({
                         type: jsPsychHtmlKeyboardResponse,
-                        stimulus: function() {
+                        stimulus: function () {
                             return `
                             <div class="instruction-box" style="text-align:center;">
                                 <h2>Context Watermark</h2>
@@ -579,10 +591,10 @@
                             </div>`;
                         },
                         choices: "NO_KEYS",
-                        on_load: function() {
-                            setTimeout(function() {
+                        on_load: function () {
+                            setTimeout(function () {
                                 let prompt = document.getElementById('spacebar-prompt-wm');
-                                if(prompt) prompt.style.display = 'block';
+                                if (prompt) prompt.style.display = 'block';
                                 jsPsych.pluginAPI.getKeyboardResponse({
                                     callback_function: jsPsych.finishTrial,
                                     valid_responses: [' '], rt_method: 'performance', persist: false, allow_held_key: false
@@ -591,7 +603,7 @@
                         }
                     });
                 }
-
+            }
             else if (is_new_task) {
                 timeline.push(getTimedRest(20, "Part Complete", "Take a brief moment to look away from the screen and rest your eyes."));
             }
@@ -604,7 +616,7 @@
 
                 let inst_1 = {
                     type: jsPsychHtmlKeyboardResponse,
-                    stimulus: function() {
+                    stimulus: function () {
                         return `
                         <div class="instruction-box" style="text-align:center;">
                             <h2>Part ${seq_task}</h2>
@@ -630,10 +642,10 @@
                         </div>`;
                     },
                     choices: "NO_KEYS",
-                    on_load: function() {
-                        setTimeout(function() {
+                    on_load: function () {
+                        setTimeout(function () {
                             let prompt = document.getElementById('spacebar-prompt-inst1');
-                            if(prompt) prompt.style.display = 'block';
+                            if (prompt) prompt.style.display = 'block';
                             jsPsych.pluginAPI.getKeyboardResponse({
                                 callback_function: jsPsych.finishTrial,
                                 valid_responses: [' '], rt_method: 'performance', persist: false, allow_held_key: false
@@ -644,7 +656,7 @@
 
                 let inst_2 = {
                     type: jsPsychHtmlKeyboardResponse,
-                    stimulus: function() {
+                    stimulus: function () {
                         return `
                         <div class="instruction-box" style="text-align:center;">
                             <h2>Social Feedback</h2>
@@ -655,10 +667,10 @@
                         </div>`;
                     },
                     choices: "NO_KEYS",
-                    on_load: function() {
-                        setTimeout(function() {
+                    on_load: function () {
+                        setTimeout(function () {
                             let prompt = document.getElementById('spacebar-prompt-inst2');
-                            if(prompt) prompt.style.display = 'block';
+                            if (prompt) prompt.style.display = 'block';
                             jsPsych.pluginAPI.getKeyboardResponse({
                                 callback_function: jsPsych.finishTrial,
                                 valid_responses: [' '], rt_method: 'performance', persist: false, allow_held_key: false
