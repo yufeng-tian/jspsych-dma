@@ -176,7 +176,6 @@
             font-weight: bold;
             color: #00ffcc;
         }
-
         .timer-text {
             position: relative;
             font-size: 32px;
@@ -185,20 +184,9 @@
         }
 
         @keyframes pulse {
-            0% {
-                opacity: 0.4;
-                transform: scale(0.98);
-            }
-
-            50% {
-                opacity: 1;
-                transform: scale(1.02);
-            }
-
-            100% {
-                opacity: 0.4;
-                transform: scale(0.98);
-            }
+            0% { opacity: 0.4; transform: scale(0.98); }
+            50% { opacity: 1; transform: scale(1.02); }
+            100% { opacity: 0.4; transform: scale(0.98); }
         }
     </style>
 </head>
@@ -293,19 +281,20 @@
     }
 
     function getTaskTargetText(study, task_id) {
-        let target_desc = "";
         if (study === 'AI') {
-            if (task_id === 'T1') target_desc = "any AI-generated face that makes you feel <strong>good, warm, or friendly</strong>.";
-            if (task_id === 'T2') target_desc = "any AI-generated face that makes you feel <strong>bad, uneasy, or threatened</strong>.";
-            if (task_id === 'T3' || task_id === 'T5') target_desc = "any AI-agent you would <strong>like to interact or team up with</strong>.";
-            if (task_id === 'T4' || task_id === 'T6') target_desc = "any AI-agent you would <strong>avoid interacting or teaming up with</strong>.";
+            if (task_id === 'T1') return `In this task, your target is any AI-generated face that makes you feel <strong>good, warm, or friendly</strong>.`;
+            if (task_id === 'T2') return `In this task, your target is any AI-generated face that makes you feel <strong>bad, uneasy, or threatened</strong>.`;
+            if (task_id === 'T3' || task_id === 'T5') return `For this task, targets are any AI-agent you would <strong>like to interact or team up with</strong> for your VH sessions.`;
+            if (task_id === 'T4' || task_id === 'T6') return `For this task, targets are any AI-agent you would <strong>avoid interacting or teaming up with</strong> for your VH sessions.`;
         } else {
-            if (task_id === 'T1') target_desc = "any face that makes you feel <strong>good, warm, or friendly</strong>.";
-            if (task_id === 'T2') target_desc = "any face that makes you feel <strong>bad, uneasy, or threatened</strong>.";
-            if (task_id === 'T3' || task_id === 'T5') target_desc = "any individual you would <strong>like to interact or team up with</strong>.";
-            if (task_id === 'T4' || task_id === 'T6') target_desc = "any individual you would <strong>avoid interacting or teaming up with</strong>.";
+            if (task_id === 'T1') return `In this task, your target is any face that makes you feel <strong>good, warm, or friendly</strong>.`;
+            if (task_id === 'T2') return `In this task, your target is any face that makes you feel <strong>bad, uneasy, or threatened</strong>.`;
+            if (task_id === 'T3') return `For this task, targets are any individuals you would <strong>like to interact or team up with</strong> for your VH sessions.`;
+            if (task_id === 'T4') return `For this task, targets are any individuals you would <strong>avoid interacting or teaming up with</strong> for your VH sessions.`;
+            if (task_id === 'T5') return `For this task, targets are any individuals you would <strong>like to interact or team up with</strong> for your VH sessions.`;
+            if (task_id === 'T6') return `For this task, targets are any individuals you would <strong>avoid interacting or teaming up with</strong> for your VH sessions.`;
         }
-        return `In this task, your goal is to identify targets.<br><br>A target is ${target_desc}`;
+        return "Please follow the instructions carefully.";
     }
 
     function calculateFeedback(is_target, response_key, filename_intensity) {
@@ -541,69 +530,61 @@
                 let intro_pages = getModuleIntroPages(study_condition, current_module, seq_module);
 
                 intro_pages.forEach((page_html, index) => {
-                    let waitTime = test_mode ? 1000 : 10000;
+                    let timer_seconds = 10;
+                    if (test_mode) timer_seconds = 1;
+
                     timeline.push({
-                        type: jsPsychHtmlKeyboardResponse,
-                        stimulus: function () {
-                            return page_html.replace('</div>', `
-                                <div id="spacebar-prompt-intro-${index}" style="display:none; text-align:center; margin-top: 40px; color:#00ffcc; font-size: 22px; font-weight:bold; animation: pulse 2s infinite;">
-                                    Press the SPACEBAR to continue.
-                                </div>
-                            </div>`);
-                        },
-                        choices: "NO_KEYS",
+                        type: jsPsychHtmlButtonResponse,
+                        stimulus: page_html,
+                        choices: ['Continue'],
                         on_load: function () {
-                            setTimeout(function () {
-                                let prompt = document.getElementById(`spacebar-prompt-intro-${index}`);
-                                if (prompt) prompt.style.display = 'block';
-                                jsPsych.pluginAPI.getKeyboardResponse({
-                                    callback_function: jsPsych.finishTrial,
-                                    valid_responses: [' '], rt_method: 'performance', persist: false, allow_held_key: false
-                                });
-                            }, waitTime);
+                            let btn = document.querySelector('.jspsych-btn');
+                            btn.disabled = true;
+                            btn.style.opacity = '0.5';
+                            btn.style.cursor = 'not-allowed';
+                            let countdown = timer_seconds;
+                            btn.innerHTML = `Please read carefully... (${countdown})`;
+                            let interval = setInterval(function () {
+                                countdown--;
+                                if (countdown > 0) {
+                                    btn.innerHTML = `Please read carefully... (${countdown})`;
+                                } else {
+                                    btn.innerHTML = 'Continue';
+                                    btn.disabled = false;
+                                    btn.style.opacity = '1';
+                                    btn.style.cursor = 'pointer';
+                                    clearInterval(interval);
+                                }
+                            }, 1000);
                         }
                     });
                 });
 
                 if (context_css !== "") {
                     let icon_desc = "";
+                    // DYNAMIC ICON DESCRIPTION BASED ON STUDY CONDITION
                     if (study_condition === 'Human') {
                         icon_desc = context_css === "context-inperson" ? "an In-Person event" : "an Online event";
                     } else {
                         icon_desc = context_css === "context-inperson" ? "a High-Immersion environment" : "a Text-Based environment";
                     }
 
+                    // THIS IS THE NEW LINE!
                     let var_name = context_css.replace('context-', '');
-                    let waitTime = test_mode ? 1000 : 8000;
-
                     timeline.push({
-                        type: jsPsychHtmlKeyboardResponse,
-                        stimulus: function () {
-                            return `
-                            <div class="instruction-box" style="text-align:center;">
-                                <h2>Context Watermark</h2>
-                                <p>During this section, an icon will appear in the center of the background.</p>
-                                <div style="width: 200px; height: 200px; margin: 30px auto; background-image: var(--bg-${var_name}); background-size: contain; background-repeat: no-repeat; background-position: center;"></div>
-                                <p>This icon indicates that the Vibe Hang session will happen <strong>${icon_desc}</strong>.</p>
-                                <div id="spacebar-prompt-wm" style="display:none; text-align:center; margin-top: 40px; color:#00ffcc; font-size: 22px; font-weight:bold; animation: pulse 2s infinite;">
-                                    Press the SPACEBAR to continue.
-                                </div>
-                            </div>`;
-                        },
-                        choices: "NO_KEYS",
-                        on_load: function () {
-                            setTimeout(function () {
-                                let prompt = document.getElementById('spacebar-prompt-wm');
-                                if (prompt) prompt.style.display = 'block';
-                                jsPsych.pluginAPI.getKeyboardResponse({
-                                    callback_function: jsPsych.finishTrial,
-                                    valid_responses: [' '], rt_method: 'performance', persist: false, allow_held_key: false
-                                });
-                            }, waitTime);
-                        }
+                        type: jsPsychHtmlButtonResponse,
+                        stimulus: `
+                        <div class="instruction-box" style="text-align:center;">
+                            <h2>Context Watermark</h2>
+                            <p>During this section, an icon will appear in the center of the background.</p>
+                            <div style="width: 200px; height: 200px; margin: 30px auto; background-image: var(--bg-${var_name}); background-size: contain; background-repeat: no-repeat; background-position: center;"></div>
+                            <p>This icon indicates that the Vibe Hang session will happen <strong>${icon_desc}</strong>.</p>
+                        </div>`,
+                        choices: ['Continue']
                     });
                 }
             }
+
             else if (is_new_task) {
                 timeline.push(getTimedRest(20, "Part Complete", "Take a brief moment to look away from the screen and rest your eyes."));
             }
@@ -612,126 +593,62 @@
                 current_task = row.task_id;
                 current_block = row.block_id;
 
-                let waitTime = test_mode ? 1000 : 10000;
-
-                let waitTime = test_mode ? 1000 : 10000;
-                let shortWaitTime = test_mode ? 1000 : 3000;
-
-                // --- PAGE 1: Target Definition ---
                 let inst_1 = {
-                    type: jsPsychHtmlKeyboardResponse,
-                    stimulus: function() {
-                        return `
-                        <div class="instruction-box">
-                            <h2 style="text-align:center;">Part ${seq_task}</h2>
-                            <p style="font-size: 22px;">${getTaskTargetText(study_condition, current_task)}</p>
-                            <div id="spacebar-prompt-1" style="display:none; text-align:center; margin-top: 50px; color:#ffffff; font-size: 20px; font-weight:bold;">
-                                Press the SPACEBAR to continue.
-                            </div>
-                            <p style="text-align:right; font-size:14px; color:#555; margin-top: 40px;">[${current_module} | ${current_task}]</p>
-                        </div>`;
-                    },
-                    choices: "NO_KEYS",
-                    on_load: function() {
-                        setTimeout(function() {
-                            let prompt = document.getElementById('spacebar-prompt-1'); if(prompt) prompt.style.display = 'block';
-                            jsPsych.pluginAPI.getKeyboardResponse({valid_responses: [' '], rt_method: 'performance', persist: false, allow_held_key: false, callback_function: jsPsych.finishTrial});
-                        }, waitTime);
+                    type: jsPsychHtmlButtonResponse,
+                    stimulus: `<div class="instruction-box"><h2 style="text-align:center;">Part ${seq_task}</h2><p>${getTaskTargetText(study_condition, current_task)}</p><br><p>Please decide whether each face is a target.</p><p style="text-align:right; font-size:14px; color:#555;">[${current_module} | ${current_task}]</p></div>`,
+                    choices: ['Next'],
+                    on_load: function () {
+                        let btn = document.querySelector('.jspsych-btn');
+                        btn.disabled = true;
+                        btn.style.opacity = '0.5';
+                        btn.style.cursor = 'not-allowed';
+                        let countdown = test_mode ? 1 : 10;
+                        btn.innerHTML = `Please read carefully... (${countdown})`;
+                        let interval = setInterval(function () {
+                            countdown--;
+                            if (countdown > 0) {
+                                btn.innerHTML = `Please read carefully... (${countdown})`;
+                            } else {
+                                btn.innerHTML = 'Next';
+                                btn.disabled = false;
+                                btn.style.opacity = '1';
+                                btn.style.cursor = 'pointer';
+                                clearInterval(interval);
+                            }
+                        }, 1000);
                     }
                 };
 
-                // --- PAGE 2: Target Formula ---
                 let inst_1_5 = {
-                    type: jsPsychHtmlKeyboardResponse,
-                    stimulus: function() {
-                        return `
-                        <div class="instruction-box">
-                            <h2 style="text-align:center;">Target Reminder</h2>
-                            ${getSimplifiedFormula(current_task)}
-                            <div id="spacebar-prompt-15" style="display:none; text-align:center; margin-top: 50px; color:#ffffff; font-size: 20px; font-weight:bold;">
-                                Press the SPACEBAR to continue.
-                            </div>
-                        </div>`;
-                    },
-                    choices: "NO_KEYS",
-                    on_load: function() {
-                        setTimeout(function() {
-                            let prompt = document.getElementById('spacebar-prompt-15'); if(prompt) prompt.style.display = 'block';
-                            jsPsych.pluginAPI.getKeyboardResponse({valid_responses: [' '], rt_method: 'performance', persist: false, allow_held_key: false, callback_function: jsPsych.finishTrial});
-                        }, shortWaitTime);
-                    }
+                    type: jsPsychHtmlButtonResponse,
+                    stimulus: `<div class="instruction-box"><h2 style="text-align:center;">Target Reminder</h2>${getSimplifiedFormula(current_task)}</div>`,
+                    choices: ['Continue to Feedback Rules']
                 };
 
-                // --- PAGE 3: Response Keys (TAG vs SKIP) ---
-                let inst_keys = {
-                    type: jsPsychHtmlKeyboardResponse,
-                    stimulus: function() {
-                        return `
-                        <div class="instruction-box" style="text-align:center;">
-                            <h2>Response Keys</h2>
-                            <div style="background-color: #2a2a2a; border-radius: 10px; padding: 25px; margin: 40px auto; width: 80%; border-left: 5px solid #00ffcc;">
-                                <div style="font-size: 26px; margin-bottom: 20px;">
-                                    Target = Press <strong>T</strong> to <strong style="color:#00ffcc;">TAG</strong>
-                                </div>
-                                <div style="font-size: 26px; color: #bbbbbb;">
-                                    Not a Target = Press <strong>SPACEBAR</strong> to <strong style="color:#ffc107;">SKIP</strong>
-                                </div>
-                            </div>
-                            <div id="spacebar-prompt-keys" style="display:none; text-align:center; margin-top: 50px; color:#ffffff; font-size: 20px; font-weight:bold;">
-                                Press the SPACEBAR to continue.
-                            </div>
-                        </div>`;
-                    },
-                    choices: "NO_KEYS",
-                    on_load: function() {
-                        setTimeout(function() {
-                            let prompt = document.getElementById('spacebar-prompt-keys'); if(prompt) prompt.style.display = 'block';
-                            jsPsych.pluginAPI.getKeyboardResponse({valid_responses: [' '], rt_method: 'performance', persist: false, allow_held_key: false, callback_function: jsPsych.finishTrial});
-                        }, shortWaitTime);
-                    }
-                };
-
-                // --- PAGE 4: Social Feedback ---
                 let inst_2 = {
-                    type: jsPsychHtmlKeyboardResponse,
-                    stimulus: function() {
-                        return `
-                        <div class="instruction-box" style="text-align:center;">
-                            <h2>Social Feedback</h2>
-                            <p style="font-size: 22px;">On each trial, you will receive social feedback indicating how many other participants agreed with your decision.</p>
-                            <div id="spacebar-prompt-2" style="display:none; text-align:center; margin-top: 50px; color:#ffffff; font-size: 20px; font-weight:bold;">
-                                Press the SPACEBAR to proceed to the Comprehension Check.
-                            </div>
-                        </div>`;
-                    },
-                    choices: "NO_KEYS",
-                    on_load: function() {
-                        setTimeout(function() {
-                            let prompt = document.getElementById('spacebar-prompt-2'); if(prompt) prompt.style.display = 'block';
-                            jsPsych.pluginAPI.getKeyboardResponse({valid_responses: [' '], rt_method: 'performance', persist: false, allow_held_key: false, callback_function: jsPsych.finishTrial});
-                        }, shortWaitTime);
-                    }
+                    type: jsPsychHtmlButtonResponse,
+                    stimulus: `<div class="instruction-box"><p>On each trial, you will receive social feedback indicating how many other participants agreed with your decision.</p></div>`,
+                    choices: ['Continue to Comprehension Check']
                 };
 
-                // --- PAGE 5: Comprehension Check ---
                 let q_prompts = [];
                 let correct_answers = [];
-                let task_for_quiz = row.task_id; // THIS GUARANTEES A PERFECT MATCH
 
-                if (task_for_quiz === 'T1' || task_for_quiz === 'T2') {
+                if (current_task === 'T1' || current_task === 'T2') {
                     q_prompts.push({ prompt: "The target in this section is to identify faces that make you feel ______", options: ["good, warm, or friendly", "bad, uneasy, or threatened"], required: true, name: 'Q1' });
-                    correct_answers.push(task_for_quiz === 'T1' ? "good, warm, or friendly" : "bad, uneasy, or threatened");
+                    correct_answers.push(current_task === 'T1' ? "good, warm, or friendly" : "bad, uneasy, or threatened");
                 } else {
                     let target_entity = (study_condition === 'AI') ? "an AI-agent" : "a person";
                     q_prompts.push({ prompt: `In this section, a target is ${target_entity} you would ______ interacting with.`, options: ["Like", "Avoid"], required: true, name: 'Q1' });
-                    correct_answers.push((task_for_quiz === 'T3' || task_for_quiz === 'T5') ? "Like" : "Avoid");
+                    correct_answers.push((current_task === 'T3' || current_task === 'T5') ? "Like" : "Avoid");
 
+                    // NEW DYNAMIC QUIZ LOGIC FOR BOTH CONDITIONS
                     if (study_condition === 'Human') {
                         q_prompts.push({ prompt: "The VH mode used in this section is ______.", options: ["In-person", "Online"], required: true, name: 'Q2' });
-                        correct_answers.push((task_for_quiz === 'T3' || task_for_quiz === 'T4') ? "In-person" : "Online");
+                        correct_answers.push((current_task === 'T3' || current_task === 'T4') ? "In-person" : "Online");
                     } else if (study_condition === 'AI') {
                         q_prompts.push({ prompt: "The interaction environment for these agents is ______.", options: ["High-immersion", "Text-based"], required: true, name: 'Q2' });
-                        correct_answers.push((task_for_quiz === 'T3' || task_for_quiz === 'T4') ? "High-immersion" : "Text-based");
+                        correct_answers.push((current_task === 'T3' || current_task === 'T4') ? "High-immersion" : "Text-based");
                     }
                 }
 
@@ -739,7 +656,6 @@
                     type: jsPsychSurveyMultiChoice,
                     preamble: `<div class="instruction-box" style="text-align:center;"><h2>Please select your answers:</h2></div>`,
                     questions: q_prompts,
-                    button_label: 'Submit Answers',
                     on_finish: function (data) {
                         let passed = true;
                         try {
@@ -755,46 +671,51 @@
                 };
 
                 let feedback_screen = {
-                    type: jsPsychHtmlKeyboardResponse,
+                    type: jsPsychHtmlButtonResponse,
                     stimulus: function () {
                         let passed = jsPsych.data.get().last(1).values()[0].passed;
                         if (passed) {
-                            return `<div class="instruction-box" style="text-align:center;"><h2 style="color:#00ffcc;">Correct!</h2><p>You may now proceed.</p>
-                            <div style="text-align:center; margin-top: 40px; color:#ffffff; font-size: 20px; font-weight:bold;">Press the SPACEBAR to continue.</div></div>`;
+                            return `<div class="instruction-box" style="text-align:center;"><h2 style="color:#00ffcc;">Correct!</h2><p>You may now proceed.</p></div>`;
                         } else {
-                            return `<div class="instruction-box" style="text-align:center; color:#ff5555;"><h2>Incorrect</h2><p>One or more of your answers were incorrect.</p><p>You will now be sent back to re-read the instructions.</p>
-                            <div style="text-align:center; margin-top: 40px; color:#ffffff; font-size: 20px; font-weight:bold;">Press the SPACEBAR to Go Back.</div></div>`;
+                            return `<div class="instruction-box" style="text-align:center; color:#ff5555;"><h2>Incorrect</h2><p>One or more of your answers were incorrect.</p><p>You will now be sent back to re-read the instructions.</p></div>`;
                         }
                     },
-                    choices: [' ']
+                    choices: function () {
+                        let passed = jsPsych.data.get().last(1).values()[0].passed;
+                        return passed ? ['Continue'] : ['Go Back to Instructions'];
+                    }
                 };
 
                 timeline.push({
-                    timeline: [inst_1, inst_1_5, inst_keys, inst_2, check_screen, feedback_screen],
+                    timeline: [inst_1, inst_1_5, inst_2, check_screen, feedback_screen],
                     loop_function: function (data) {
                         let last_quiz = data.filter({ trial_type: 'survey-multi-choice' }).last(1).values()[0];
                         return last_quiz.passed === false;
                     }
                 });
 
-                // --- PAGE 6: Finger Guidance ---
                 timeline.push({
                     type: jsPsychHtmlKeyboardResponse,
                     stimulus: `
                     <div class="instruction-box" style="text-align:center;">
-                        <h2>Finger Placement</h2>
-                        <p style="font-size: 22px;">Rest one finger on the <strong>SPACE BAR</strong>, and another finger on the <strong>T</strong> key.</p>
-                        <div style="text-align:center; margin-top: 50px; color:#ffffff; font-size: 20px; font-weight:bold;">
-                            Press the SPACEBAR to continue.
+                        
+                        <div style="display: flex; justify-content: center; margin-bottom: 40px;">
+                            <div style="text-align: left; font-size: 26px; line-height: 1.8;">
+                                If you identify a target, press the <strong>T</strong> key.<br>
+                                If not, press the <strong>SPACE BAR</strong> to pass.
+                            </div>
                         </div>
+                        
+                        <p>Rest one finger on the <strong>SPACE BAR</strong>, and another finger on the <strong>T</strong> key.</p>
+                        
+                        <p style="color:#888; font-size: 18px; margin-top: 40px;">Press the SPACE BAR to continue.</p>
                     </div>`,
                     choices: [' ']
                 });
 
-                // --- PAGE 7: Practice Intro ---
                 timeline.push({
                     type: jsPsychHtmlKeyboardResponse,
-                    stimulus: `<div class="instruction-box" style="text-align:center;"><h2>Practice Trials</h2><p style="font-size: 22px;">You will now complete practice trials.</p><br><p style="color:#ffffff; font-size: 20px; font-weight: bold; margin-top: 30px;">Press the SPACEBAR to begin.</p></div>`,
+                    stimulus: `<div class="instruction-box" style="text-align:center;"><h2>Practice Trials</h2><p>You will now complete practice trials.</p><br><p style="color:#888; font-size: 18px;">Press the SPACE BAR to begin.</p></div>`,
                     choices: [' ']
                 });
 
