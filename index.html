@@ -530,30 +530,34 @@
                 let intro_pages = getModuleIntroPages(study_condition, current_module, seq_module);
 
                 intro_pages.forEach((page_html, index) => {
-                    let timer_seconds = 10;
-                    if (test_mode) timer_seconds = 1;
-
+                    let timer_seconds = test_mode ? 1 : 10;
                     timeline.push({
-                        type: jsPsychHtmlButtonResponse,
-                        stimulus: page_html,
-                        choices: ['Continue'],
-                        on_load: function () {
-                            let btn = document.querySelector('.jspsych-btn');
-                            btn.disabled = true;
-                            btn.style.opacity = '0.5';
-                            btn.style.cursor = 'not-allowed';
+                        type: jsPsychHtmlKeyboardResponse,
+                        stimulus: function() {
+                            return page_html.replace('</div>', `
+                                <div id="spacebar-timer-intro-${index}" style="margin-top: 40px; text-align: center; color: #888; font-size: 18px;">
+                                    Please read carefully... (${timer_seconds})
+                                </div>
+                            </div>`);
+                        },
+                        choices: "NO_KEYS",
+                        on_load: function() {
                             let countdown = timer_seconds;
-                            btn.innerHTML = `Please read carefully... (${countdown})`;
-                            let interval = setInterval(function () {
+                            let timer_el = document.getElementById(`spacebar-timer-intro-${index}`);
+                            let interval = setInterval(function() {
                                 countdown--;
                                 if (countdown > 0) {
-                                    btn.innerHTML = `Please read carefully... (${countdown})`;
+                                    if (timer_el) timer_el.innerText = `Please read carefully... (${countdown})`;
                                 } else {
-                                    btn.innerHTML = 'Continue';
-                                    btn.disabled = false;
-                                    btn.style.opacity = '1';
-                                    btn.style.cursor = 'pointer';
+                                    if (timer_el) {
+                                        timer_el.innerText = 'Press the SPACEBAR to continue.';
+                                        timer_el.style.color = '#ffffff';
+                                    }
                                     clearInterval(interval);
+                                    jsPsych.pluginAPI.getKeyboardResponse({
+                                        callback_function: jsPsych.finishTrial,
+                                        valid_responses: [' '], rt_method: 'performance', persist: false, allow_held_key: false
+                                    });
                                 }
                             }, 1000);
                         }
@@ -594,41 +598,78 @@
                 current_block = row.block_id;
 
                 let inst_1 = {
-                    type: jsPsychHtmlButtonResponse,
-                    stimulus: `<div class="instruction-box"><h2 style="text-align:center;">Part ${seq_task}</h2><p>${getTaskTargetText(study_condition, current_task)}</p><br><p>Please decide whether each face is a target.</p><p style="text-align:right; font-size:14px; color:#555;">[${current_module} | ${current_task}]</p></div>`,
-                    choices: ['Next'],
-                    on_load: function () {
-                        let btn = document.querySelector('.jspsych-btn');
-                        btn.disabled = true;
-                        btn.style.opacity = '0.5';
-                        btn.style.cursor = 'not-allowed';
+                    type: jsPsychHtmlKeyboardResponse, 
+                    stimulus: function() {
+                        return `
+                        <div class="instruction-box">
+                            <h2 style="text-align:center;">Part ${seq_task}</h2>
+                            <p>${getTaskTargetText(study_condition, current_task)}</p>
+                            <div id="spacebar-timer" style="margin-top: 50px; text-align: center; color: #888; font-size: 18px;">
+                                Please read carefully... (10)
+                            </div>
+                        </div>`;
+                    },
+                    choices: "NO_KEYS", 
+                    on_load: function() {
                         let countdown = test_mode ? 1 : 10;
-                        btn.innerHTML = `Please read carefully... (${countdown})`;
-                        let interval = setInterval(function () {
+                        let timer_el = document.getElementById('spacebar-timer');
+                        if (test_mode && timer_el) timer_el.innerText = `Please read carefully... (${countdown})`;
+                        
+                        let interval = setInterval(function() {
                             countdown--;
                             if (countdown > 0) {
-                                btn.innerHTML = `Please read carefully... (${countdown})`;
+                                if (timer_el) timer_el.innerText = `Please read carefully... (${countdown})`;
                             } else {
-                                btn.innerHTML = 'Next';
-                                btn.disabled = false;
-                                btn.style.opacity = '1';
-                                btn.style.cursor = 'pointer';
+                                if (timer_el) {
+                                    timer_el.innerText = 'Press the SPACEBAR to continue.';
+                                    timer_el.style.color = '#ffffff'; 
+                                }
                                 clearInterval(interval);
+                                jsPsych.pluginAPI.getKeyboardResponse({
+                                    callback_function: jsPsych.finishTrial,
+                                    valid_responses: [' '], rt_method: 'performance', persist: false, allow_held_key: false
+                                });
                             }
                         }, 1000);
                     }
                 };
 
                 let inst_1_5 = {
-                    type: jsPsychHtmlButtonResponse,
-                    stimulus: `<div class="instruction-box"><h2 style="text-align:center;">Target Reminder</h2>${getSimplifiedFormula(current_task)}</div>`,
-                    choices: ['Continue to Feedback Rules']
+                    type: jsPsychHtmlKeyboardResponse,
+                    stimulus: `<div class="instruction-box"><h2 style="text-align:center;">Target Reminder</h2>${getSimplifiedFormula(current_task)}
+                    <div id="spacebar-timer-15" style="margin-top: 50px; text-align: center; color: #888; font-size: 18px;">Please wait...</div></div>`,
+                    choices: "NO_KEYS",
+                    on_load: function() {
+                        setTimeout(function() {
+                            let timer_el = document.getElementById('spacebar-timer-15');
+                            if (timer_el) {
+                                timer_el.innerText = 'Press the SPACEBAR to continue.';
+                                timer_el.style.color = '#ffffff';
+                            }
+                            jsPsych.pluginAPI.getKeyboardResponse({
+                                callback_function: jsPsych.finishTrial, valid_responses: [' '], rt_method: 'performance', persist: false, allow_held_key: false
+                            });
+                        }, test_mode ? 500 : 2000);
+                    }
                 };
 
                 let inst_2 = {
-                    type: jsPsychHtmlButtonResponse,
-                    stimulus: `<div class="instruction-box"><p>On each trial, you will receive social feedback indicating how many other participants agreed with your decision.</p></div>`,
-                    choices: ['Continue to Comprehension Check']
+                    type: jsPsychHtmlKeyboardResponse,
+                    stimulus: `<div class="instruction-box"><h2 style="text-align:center;">Social Feedback</h2><p>On each trial, you will receive social feedback indicating how many other participants agreed with your decision.</p>
+                    <div id="spacebar-timer-2" style="margin-top: 50px; text-align: center; color: #888; font-size: 18px;">Please wait...</div></div>`,
+                    choices: "NO_KEYS",
+                    on_load: function() {
+                        setTimeout(function() {
+                            let timer_el = document.getElementById('spacebar-timer-2');
+                            if (timer_el) {
+                                timer_el.innerText = 'Press the SPACEBAR to proceed to the Comprehension Check.';
+                                timer_el.style.color = '#ffffff';
+                            }
+                            jsPsych.pluginAPI.getKeyboardResponse({
+                                callback_function: jsPsych.finishTrial, valid_responses: [' '], rt_method: 'performance', persist: false, allow_held_key: false
+                            });
+                        }, test_mode ? 500 : 2000);
+                    }
                 };
 
                 let q_prompts = [];
