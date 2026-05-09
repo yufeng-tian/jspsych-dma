@@ -176,6 +176,7 @@
             font-weight: bold;
             color: #00ffcc;
         }
+
         .timer-text {
             position: relative;
             font-size: 32px;
@@ -184,9 +185,20 @@
         }
 
         @keyframes pulse {
-            0% { opacity: 0.4; transform: scale(0.98); }
-            50% { opacity: 1; transform: scale(1.02); }
-            100% { opacity: 0.4; transform: scale(0.98); }
+            0% {
+                opacity: 0.4;
+                transform: scale(0.98);
+            }
+
+            50% {
+                opacity: 1;
+                transform: scale(1.02);
+            }
+
+            100% {
+                opacity: 0.4;
+                transform: scale(0.98);
+            }
         }
     </style>
 </head>
@@ -207,12 +219,31 @@
     const urlParams = new URLSearchParams(window.location.search);
     const subject_id = urlParams.get('PROLIFIC_PID') || Math.floor(Math.random() * 10000).toString();
     const study_condition = urlParams.get('condition') || 'Human';
-    const test_mode = urlParams.get('testmode') === 'true'; // <--- NATIVE JS TEST MODE GRABBER
+    const test_mode = urlParams.get('testmode') === 'true';
     const jsPsych = initJsPsych({});
     const list_num = (parseInt(subject_id.replace(/\D/g, '')) || 1) % 24 + 1;
     const list_path = `lists/list_${String(list_num).padStart(2, '0')}.csv`;
 
-    jsPsych.data.addProperties({ subject_id: subject_id, condition: study_condition, list_used: list_path, test_mode_active: test_mode });
+    // --- NEW: DYNAMIC F/J KEY COUNTERBALANCING ---
+    const key_condition = jsPsych.randomization.sampleWithoutReplacement(['F_Target', 'J_Target'], 1)[0];
+    let target_key, nontarget_key, instr_target, instr_nontarget;
+
+    if (key_condition === 'F_Target') {
+        target_key = 'f'; nontarget_key = 'j';
+        instr_target = 'F'; instr_nontarget = 'J';
+    } else {
+        target_key = 'j'; nontarget_key = 'f';
+        instr_target = 'J'; instr_nontarget = 'F';
+    }
+
+    // Capture everything for DataPipe
+    jsPsych.data.addProperties({
+        subject_id: subject_id,
+        condition: study_condition,
+        list_used: list_path,
+        test_mode_active: test_mode,
+        key_mapping: key_condition // CRITICAL FOR DDM ACCURACY
+    });
 
     function shuffleArray(array) {
         let currentIndex = array.length, randomIndex;
@@ -273,10 +304,10 @@
 
     function getSimplifiedFormula(task_id) {
         let formula = "";
-        if (task_id === 'T1') formula = "T = feel good/ friendly";
-        else if (task_id === 'T2') formula = "T = feel bad/ threatened";
-        else if (task_id === 'T3' || task_id === 'T5') formula = "T = would like to";
-        else if (task_id === 'T4' || task_id === 'T6') formula = "T = avoid";
+        if (task_id === 'T1') formula = "TARGET = feel good/ friendly";
+        else if (task_id === 'T2') formula = "TARGET = feel bad/ threatened";
+        else if (task_id === 'T3' || task_id === 'T5') formula = "TARGET = would like to";
+        else if (task_id === 'T4' || task_id === 'T6') formula = "TARGET = avoid";
         return `<div style="font-size: 40px; font-weight: bold; text-align: center; margin: 50px 0; color: #ffffff;">${formula}</div>`;
     }
 
@@ -299,10 +330,12 @@
 
     function calculateFeedback(is_target, response_key, filename_intensity) {
         let resp = String(response_key || '').trim().toLowerCase();
-
         let is_correct = false;
-        if (String(is_target).trim() === '1' && resp === 't') is_correct = true;
-        if (String(is_target).trim() === '0' && (resp === ' ' || resp === 'space' || resp === 'spacebar' || resp === '')) is_correct = true;
+
+        // --- NEW: DYNAMIC KEY ACCURACY CHECK ---
+        if (String(is_target).trim() === '1' && resp === target_key) is_correct = true;
+        if (String(is_target).trim() === '0' && resp === nontarget_key) is_correct = true;
+        // ----------------------------------------
 
         let min, max;
         if (is_correct) {
@@ -694,28 +727,54 @@
                     }
                 });
 
+                // --- SCREEN 1: Final Task Reminder ---
+                if (is_new_module) {
+                    timeline.push({
+                        type: jsPsychHtmlButtonResponse,
+                        stimulus: `
+                    <div class="instruction-box">
+                        <h2 style="text-align:center; color:#ffc107;">Final Task Reminder</h2>
+                        <div style="font-size: 22px; line-height: 1.6; margin-top: 30px; text-align: left;">
+                            <p style="margin-bottom: 25px;">
+                                <strong style="color: #00ffcc; font-size: 26px;">Do not track people:</strong><br>
+                                Treat every single image as a completely new encounter, even if you recognize the face.
+                            </p>
+                            <p>
+                                <strong style="color: #00ffcc; font-size: 26px;">Watch the Goal:</strong><br>
+                                Halfway through this section, the evaluation question will change. Judge the faces <em>only</em> based on the current question.
+                            </p>
+                        </div>
+                    </div>`,
+                        choices: ['I Understand']
+                    });
+                }
+                // --- SCREEN 2: Dynamic Keys ---
                 timeline.push({
-                    type: jsPsychHtmlKeyboardResponse,
+                    type: jsPsychHtmlButtonResponse,
                     stimulus: `
-                    <div class="instruction-box" style="text-align:center;">
-                        
-                        <div style="display: flex; justify-content: center; margin-bottom: 40px;">
-                            <div style="text-align: left; font-size: 26px; line-height: 1.8;">
-                                If you identify a target, press the <strong>T</strong> key.<br>
-                                If not, press the <strong>SPACE BAR</strong> to pass.
+                    <div class="instruction-box" style="text-align: center;">
+                        <h2 style="color:#ffc107;">Your Assigned Response Keys</h2>
+                        <div style="font-size: 28px; line-height: 2.0; margin-top: 40px; padding: 40px 20px; border: 2px solid #555; border-radius: 8px; background-color: #222;">
+                            <div style="margin-bottom: 30px;">
+                                If you find a target: Press the <strong style="color: #00ffcc; font-size: 48px; margin: 0 10px;">${instr_target}</strong> key
+                            </div>
+                            <div>
+                                If you do not: Press the <strong style="color: #aaaaaa; font-size: 48px; margin: 0 10px;">${instr_nontarget}</strong> key
                             </div>
                         </div>
-                        
-                        <p>Rest one finger on the <strong>SPACE BAR</strong>, and another finger on the <strong>T</strong> key.</p>
-                        
-                        <p style="color:#888; font-size: 18px; margin-top: 40px;">Press the SPACE BAR to continue.</p>
                     </div>`,
-                    choices: [' ']
+                    choices: ['Proceed']
                 });
 
                 timeline.push({
                     type: jsPsychHtmlKeyboardResponse,
-                    stimulus: `<div class="instruction-box" style="text-align:center;"><h2>Practice Trials</h2><p>You will now complete practice trials.</p><br><p style="color:#888; font-size: 18px;">Press the SPACE BAR to begin.</p></div>`,
+                    stimulus: `
+                    <div class="instruction-box" style="text-align:center;">
+                        <h2>Practice Trials</h2>
+                        <p>You will now complete practice trials.</p><br>
+                        <p style="color:#00ffcc; font-size: 20px; font-weight: bold;">Place your fingers on the ${instr_target} and ${instr_nontarget} keys.</p>
+                        <p style="color:#888; font-size: 18px; margin-top: 40px;">Press the SPACE BAR with your thumb to begin.</p>
+                    </div>`,
                     choices: [' ']
                 });
 
@@ -750,7 +809,7 @@
                     timeline.push({
                         type: jsPsychHtmlKeyboardResponse,
                         stimulus: w_mark + `<div class="stimulus-container"><div class="practice-banner">PRACTICE</div><img src="${p_row.stimulus}" class="stimulus-image"></div>`,
-                        choices: ['t', ' '], data: { is_practice: true, task_id: p_row.task_id },
+                        choices: [target_key, nontarget_key], data: { is_practice: true, task_id: p_row.task_id },
                         on_finish: function (data) { data.feedback_html = w_mark + `<div class="stimulus-container"><div class="practice-banner">PRACTICE</div>${calculateFeedback(p_row.is_target || 0, data.response, pb_int)}</div>`; }
                     });
                     timeline.push({ type: jsPsychHtmlKeyboardResponse, stimulus: function () { return jsPsych.data.get().last(1).values()[0].feedback_html; }, choices: "NO_KEYS", trial_duration: test_mode ? 400 : 1500 });
@@ -758,7 +817,13 @@
 
                 timeline.push({
                     type: jsPsychHtmlKeyboardResponse,
-                    stimulus: `<div class='instruction-box' style='text-align:center;'><h2>Practice Complete.</h2><p>The real trials will now begin.</p><br><p style='color:#888;'>Press SPACE BAR to continue.</p></div>`,
+                    stimulus: `
+                    <div class='instruction-box' style='text-align:center;'>
+                        <h2>Practice Complete.</h2>
+                        <p>The real trials will now begin.</p><br>
+                        <p style="color:#888; font-size: 18px; margin-top: 40px;">Keep your fingers on the keys.</p>
+                        <p style="color:#888; font-size: 18px;">Press the SPACE BAR to begin.</p>
+                    </div>`,
                     choices: [' ']
                 });
             }
@@ -776,7 +841,7 @@
             timeline.push({
                 type: jsPsychHtmlKeyboardResponse,
                 stimulus: w_mark + `<div class="stimulus-container"><img src="${row.stimulus}" class="stimulus-image"></div>`,
-                choices: ['t', ' '],
+                choices: [target_key, nontarget_key],
                 data: { is_practice: false, task_id: row.task_id, module_id: row.module_id, block_id: row.block_id, is_target: row.is_target, intensity: row.intensity, condition: study_condition },
                 on_finish: function (data) { data.feedback_html = w_mark + `<div class="stimulus-container">${calculateFeedback(data.is_target, data.response, data.intensity, row.stimulus)}</div>`; }
             });
