@@ -270,35 +270,34 @@
             "<strong>AI-generated digital profiles</strong>" :
             "photos of <strong>other VH participants</strong>";
 
-        // Page 1: High Level Session Goal
+        // Page 1: High Level Session Goal (Trimmed down!)
         pages.push(`
             <div class="instruction-box" style="text-align:center;">
                 <h2 style="color:#00ffcc;">Session Overview</h2>
-                <p style="font-size: 22px; text-align: left;">Welcome. In this session, you will evaluate ${target_entity} to help synthesize an optimal social cohort.</p>
-                <p style="font-size: 20px; text-align: left; margin-top: 20px;">You will be asked to make rapid, split-second judgments based on your immediate gut reaction to each face.</p>
+                <p style="font-size: 22px; text-align: left;">Welcome. You will evaluate ${target_entity} to help form a social cohort.</p>
+                <p style="font-size: 20px; text-align: left; margin-top: 20px;">Please make rapid, gut-reaction decisions for each face.</p>
             </div>
         `);
 
-        // Page 2: The Consensus Feedback (Moved here permanently!)
+        // Page 2: The Consensus Feedback (Stripped down!)
         pages.push(`
             <div class="instruction-box" style="text-align:center;">
-                <h2 style="color:#00ffcc;">Real-Time Social Feedback</h2>
-                <p style="font-size: 20px; text-align: left;">Immediately after you make a decision for a face, the system will show you the social consensus of past participants:</p>
+                <h2 style="color:#00ffcc;">Real-Time Feedback</h2>
+                <p style="font-size: 20px; text-align: left;">After each choice, you will see feedback from past participants:</p>
                 <div style="margin: 35px auto; padding: 25px; border: 2px solid #444; border-radius: 8px; background-color: #222; width: 60%;">
                     <div style="font-size: 65px; font-weight: bold; color: #ffffff; line-height: 1;">84%</div>
                     <div style="font-size: 20px; color: #cccccc; margin-top: 5px;">of others agree with you</div>
                 </div>
-                <p style="font-size: 18px; color:#aaa; text-align: left;">Use this feedback to calibrate your social instincts as you progress through the session.</p>
             </div>
         `);
 
-        // Page 3: The Two Golden Rules (Moved here permanently!)
+        // Page 3: The Two Golden Rules (User's locked version)
         pages.push(`
             <div class="instruction-box">
                 <h2 style="text-align:center; color:#ffc107;">Two Golden Rules</h2>
                 <div style="font-size: 20px; line-height: 1.6; margin-top: 25px;">
-                    <p><strong style="color: #00ffcc;">1. Treat every face as brand new:</strong><br>Do not track identities. Even if a face appears more than once across the session, judge it strictly in the moment.</p>
-                    <p style="margin-top: 25px;"><strong style="color: #00ffcc;">2. Watch the changing target:</strong><br>As you move between sections, your assigned Goal will flip (e.g., from *'Who to interact with'* to *'Who to avoid'*). Pay close attention to the prompt at the top of the screen.</p>
+                    <p><strong style="color: #00ffcc;">1. Do not track person:</strong><br>Treat every image as brand new, even if you recognize the face.</p>
+                    <p style="margin-top: 25px;"><strong style="color: #00ffcc;">2. Watch the changing goal:</strong><br>Your target question will flip between sections (e.g., from Like to Avoid). Always check the prompt at the top.</p>
                 </div>
             </div>
         `);
@@ -314,65 +313,80 @@
 
     // PERFECTED MODULE INTROS FOR HUMAN AND AI
     // ==========================================
-    // REFACTORED: MODULE INTRO "SUPER-CARDS"
+    // REFACTORED: MODULE INTRO "SUPER-CARDS" (Native Design Palette)
     // ==========================================
     function getModuleIntroPages(study, module_id, seq_num) {
 
-        // Dark-mode optimized Warning Box (No eye-straining yellow flashbangs)
         let warning_box = (study === 'Human') ?
-            `<div style="background-color: #2a1f04; border-left: 5px solid #ffc107; padding: 16px; margin-top: 24px; border-radius: 4px; text-align: left;">
-                <div style="color: #ffc107; font-size: 16px; font-weight:bold; letter-spacing: 1px; text-transform:uppercase;">⚠️ CRITICAL: Shared Community Bonus</div>
-                <div style="color: #ddd; font-size: 16px; margin-top: 6px; line-height: 1.4;">Sponsors strictly monitor group cohesion. Selecting hostile or incompatible partners will ruin your cohort's metrics and forfeit your cash grant. Choose wisely.</div>
+            `<div style="background-color: #2a1f04; border-left: 5px solid #ffc107; padding: 14px; margin-top: 35px; border-radius: 4px; text-align: left; font-size: 15px; line-height: 1.4;">
+                <div style="color: #ffc107; font-weight:bold; text-transform:uppercase; letter-spacing:0.5px;">⚠️ Shared Community Bonus</div>
+                <div style="color: #ddd; margin-top: 4px;">Sponsors monitor group cohesion. Selecting hostile or incompatible partners ruins metrics and forfeits your cash grant. Choose wisely.</div>
             </div>` :
-            `<div style="background-color: #2a1f04; border-left: 5px solid #ffc107; padding: 16px; margin-top: 24px; border-radius: 4px; text-align: left;">
-                <div style="color: #ffc107; font-size: 16px; font-weight:bold; letter-spacing: 1px; text-transform:uppercase;">⚠️ CRITICAL: Shared Community Bonus</div>
-                <div style="color: #ddd; font-size: 16px; margin-top: 6px; line-height: 1.4;">Sponsors strictly monitor Human-AI integration. Selecting hostile or unpredictable AI agents will ruin your cohort's metrics and forfeit your cash grant. Choose wisely.</div>
+            `<div style="background-color: #2a1f04; border-left: 5px solid #ffc107; padding: 14px; margin-top: 35px; border-radius: 4px; text-align: left; font-size: 15px; line-height: 1.4;">
+                <div style="color: #ffc107; font-weight:bold; text-transform:uppercase; letter-spacing:0.5px;">⚠️ Shared Community Bonus</div>
+                <div style="color: #ddd; margin-top: 4px;">Sponsors monitor Human-AI integration. Selecting hostile or unpredictable agents ruins metrics and forfeits your cash grant. Choose wisely.</div>
             </div>`;
 
-        let mode_title = "";
-        let prose_content = "";
+        let content_html = "";
 
         if (module_id === 'M1') {
-            mode_title = "Sequential Base Evaluation";
             let t_ent = (study === 'AI') ? "AI-generated profiles" : "participant photos";
-            prose_content = `<p>In this section, you will view a series of sequentially presented ${t_ent}.</p><p>Please follow the target instructions provided on the next screen.</p>`;
+            content_html = `
+                <h2 style="font-size: 30px; text-align:center; margin-top: 0;">Section ${seq_num}: Base Evaluation</h2>
+                <p style="font-size: 22px; margin-top: 25px; text-align:center;">In this section, you will view a series of sequentially presented ${t_ent}.</p>
+                <p style="font-size: 18px; color: #aaaaaa; text-align:center;">Please follow the target instructions on the next screen.</p>
+            `;
         }
         else if (module_id === 'M2') {
-            mode_title = (study === 'Human') ? "In-Person Cohort Selection" : "High-Immersion AI Cohort";
-            let sub_text = (study === 'Human') ?
-                `These individuals live <strong>within approximately 30 minutes of your location</strong> (derived from your pre-screening ZIP code) and are designated for face-to-face VH events (e.g., meeting for coffee or local trivia).` :
-                `These agents act as mirrors of real-world online social dynamics (ranging from friendly to hostile) and are designated for full high-immersion communication (3D avatars, real-time voice).`;
-            prose_content = `<p>${sub_text}</p><p>You must carefully evaluate the 'vibe' of each to determine if they are a suitable match.</p>` + warning_box;
+            let t_who = (study === 'AI') ? "AI agents" : "VH participants";
+            let t_event = (study === 'AI') ? "High-Immersion VH events" : "In-person VH events";
+            let t_sub = (study === 'AI') ? "(featuring 3D avatars and real-time voice generation)" : "(we used your ZIP to find locals within 30 minutes)";
+
+            content_html = `
+                <div style="text-align: center;">
+                    <p style="font-size: 22px; margin-bottom: 15px;">In this module, ${t_who} will join</p>
+                    <div style="font-size: 36px; font-weight: bold; margin: 10px 0;">${t_event}</div>
+                    <p style="color: #aaaaaa; font-size: 18px; margin-top: 15px;">${t_sub}</p>
+
+                    <div style="margin: 35px auto 5px auto; width: 140px; height: 140px; background-image: var(--bg-inperson); background-size: contain; background-repeat: no-repeat; background-position: center;"></div>
+                    <div style="font-size: 13px; color: #777777; text-transform: uppercase; letter-spacing: 1px;">Session Watermark</div>
+
+                    ${warning_box}
+                </div>
+            `;
         }
         else if (module_id === 'M3') {
-            mode_title = (study === 'Human') ? "National Online Cohort Selection" : "Text-Based AI Cohort";
-            let sub_text = (study === 'Human') ?
-                `These individuals live <strong>all across the United States</strong> and are designated for virtual online VH events (e.g., virtual game nights or digital co-working).` :
-                `These agents act as mirrors of real-world online social dynamics and are designated strictly for text-based chatroom communication (no voice or avatars).`;
-            prose_content = `<p>${sub_text}</p><p>You must carefully evaluate the 'vibe' of each to determine if they are a suitable match.</p>` + warning_box;
-        }
+            let t_who = (study === 'AI') ? "AI agents" : "VH participants";
+            let t_event = (study === 'AI') ? "Text-Based VH events" : "Online VH events";
+            let t_sub = (study === 'AI') ? "(chatroom text only; no voice or avatars)" : "(participants living all across the United States)";
+            let wm_var = (study === 'AI') ? "text" : "online";
 
-        let full_card_html = `
-        <div class="instruction-box" style="max-width: 820px; text-align: left;">
-            <h2 style="text-align:center; color:#00ffcc; border-bottom: 1px solid #444; padding-bottom: 10px; margin-top:0;">Section ${seq_num}: ${mode_title}</h2>
-            <div style="font-size: 20px; line-height: 1.5; margin-top: 20px;">
-                ${prose_content}
-            </div>
-            <p style="text-align:right; font-size:13px; color:#555; margin-top: 20px; margin-bottom:0;">[${module_id}]</p>
-        </div>`;
+            content_html = `
+                <div style="text-align: center;">
+                    <p style="font-size: 22px; margin-bottom: 15px;">In this module, ${t_who} will attend</p>
+                    <div style="font-size: 36px; font-weight: bold; margin: 10px 0;">${t_event}</div>
+                    <p style="color: #aaaaaa; font-size: 18px; margin-top: 15px;">${t_sub}</p>
+
+                    <div style="margin: 35px auto 5px auto; width: 140px; height: 140px; background-image: var(--bg-${wm_var}); background-size: contain; background-repeat: no-repeat; background-position: center;"></div>
+                    <div style="font-size: 13px; color: #777777; text-transform: uppercase; letter-spacing: 1px;">Session Watermark</div>
+
+                    ${warning_box}
+                </div>
+            `;
+        }
 
         return [{
             type: jsPsychHtmlButtonResponse,
-            stimulus: full_card_html,
+            stimulus: `<div class="instruction-box" style="max-width: 780px;">${content_html}<p style="text-align:right; font-size:12px; color:#555555; margin-top: 20px; margin-bottom:0;">[${module_id}]</p></div>`,
             choices: ['Acknowledge & Continue'],
             on_load: function () {
                 let btn = document.querySelector('.jspsych-btn');
                 btn.disabled = true; btn.style.opacity = '0.4';
-                let c = test_mode ? 1 : 3; // 3 Second lock
-                btn.innerText = `Reading Lock (${c}s)...`;
+                let c = test_mode ? 1 : 3;
+                btn.innerText = `Reading lock (${c}s)...`;
                 let intv = setInterval(() => {
                     c--;
-                    if (c > 0) btn.innerText = `Reading Lock (${c}s)...`;
+                    if (c > 0) btn.innerText = `Reading lock (${c}s)...`;
                     else { btn.innerText = 'Acknowledge & Continue'; btn.disabled = false; btn.style.opacity = '1'; clearInterval(intv); }
                 }, 1000);
             }
@@ -641,15 +655,6 @@
 
                 let intro_trials = getModuleIntroPages(study_condition, current_module, seq_module);
                 intro_trials.forEach(trial => timeline.push(trial));
-
-                if (context_css !== "") {
-                    let icon_desc = "";
-                    // DYNAMIC ICON DESCRIPTION BASED ON STUDY CONDITION
-                    if (study_condition === 'Human') {
-                        icon_desc = context_css === "context-inperson" ? "an In-Person event" : "an Online event";
-                    } else {
-                        icon_desc = context_css === "context-inperson" ? "a High-Immersion environment" : "a Text-Based environment";
-                    }
 
                     // THIS IS THE NEW LINE!
                     let var_name = context_css.replace('context-', '');
