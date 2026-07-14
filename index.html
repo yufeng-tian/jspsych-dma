@@ -218,8 +218,17 @@
     const list_num = (parseInt(subject_id.replace(/\D/g, '')) || 1) % 24 + 1;
     const list_path = `lists/list_${String(list_num).padStart(2, '0')}.csv`;
 
-    // --- DYNAMIC F/J KEY COUNTERBALANCING ---
-    const key_condition = jsPsych.randomization.sampleWithoutReplacement(['F_Target', 'J_Target'], 1)[0];
+    // --- DYNAMIC F/J KEY COUNTERBALANCING (QUALTRICS ASSIGNED) ---
+    let raw_key = urlParams.get('key');
+
+    // Safety net: Converts to lowercase. Falls back to random if testing locally.
+    let target_key_val = (raw_key && (raw_key.toLowerCase() === 'f' || raw_key.toLowerCase() === 'j'))
+        ? raw_key.toLowerCase()
+        : (Math.random() > 0.5 ? 'f' : 'j');
+
+    console.log("QUALTRICS ASSIGNED KEY: ", target_key_val);
+
+    const key_condition = (target_key_val === 'f') ? 'F_Target' : 'J_Target';
     let target_key, nontarget_key, instr_target, instr_nontarget;
 
     if (key_condition === 'F_Target') {
@@ -405,20 +414,20 @@
                     </div>
                 </div>`,
                 labels: [
-                    '<span style="font-size: 18px; color: #ff5555;">0%<br>Will Not Attend</span>', 
-                    '<span style="font-size: 18px; color: #aaaaaa;">50%<br>Unsure</span>', 
+                    '<span style="font-size: 18px; color: #ff5555;">0%<br>Will Not Attend</span>',
+                    '<span style="font-size: 18px; color: #aaaaaa;">50%<br>Unsure</span>',
                     '<span style="font-size: 18px; color: #00ffcc;">100%<br>Definitely Will Attend</span>'
                 ],
                 min: 0,
                 max: 100,
                 start: 50,
                 step: 1,
-                slider_width: 700, 
-                require_movement: true, 
-                data: { 
-                    is_baseline_slider: true, 
-                    module_id: module_id, 
-                    context_type: context_label 
+                slider_width: 700,
+                require_movement: true,
+                data: {
+                    is_baseline_slider: true,
+                    module_id: module_id,
+                    context_type: context_label
                 }
             });
         }
