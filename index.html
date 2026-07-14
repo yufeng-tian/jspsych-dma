@@ -8,6 +8,7 @@
     <script src="https://unpkg.com/@jspsych/plugin-html-keyboard-response@1.1.3"></script>
     <script src="https://unpkg.com/@jspsych/plugin-html-button-response@1.1.3"></script>
     <script src="https://unpkg.com/@jspsych/plugin-survey-multi-choice@1.1.3"></script>
+    <script src="https://unpkg.com/@jspsych/plugin-html-slider-response@1.1.3"></script>
     <script src="https://unpkg.com/@jspsych/plugin-preload@1.1.3"></script>
     <script src="https://unpkg.com/@jspsych/plugin-fullscreen@1.1.2"></script>
     <link href="https://unpkg.com/jspsych@7.3.4/css/jspsych.css" rel="stylesheet" type="text/css" />
@@ -177,13 +178,6 @@
             color: #00ffcc;
         }
 
-        .timer-text {
-            position: relative;
-            font-size: 32px;
-            font-weight: bold;
-            color: #00ffcc;
-        }
-
         @keyframes pulse {
             0% {
                 opacity: 0.4;
@@ -224,7 +218,7 @@
     const list_num = (parseInt(subject_id.replace(/\D/g, '')) || 1) % 24 + 1;
     const list_path = `lists/list_${String(list_num).padStart(2, '0')}.csv`;
 
-    // --- NEW: DYNAMIC F/J KEY COUNTERBALANCING ---
+    // --- DYNAMIC F/J KEY COUNTERBALANCING ---
     const key_condition = jsPsych.randomization.sampleWithoutReplacement(['F_Target', 'J_Target'], 1)[0];
     let target_key, nontarget_key, instr_target, instr_nontarget;
 
@@ -242,7 +236,7 @@
         condition: study_condition,
         list_used: list_path,
         test_mode_active: test_mode,
-        key_mapping: key_condition // CRITICAL FOR DDM ACCURACY
+        key_mapping: key_condition
     });
 
     function shuffleArray(array) {
@@ -260,17 +254,12 @@
         return `<div class="${context}" style="position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 400px; height: 400px; z-index: 0; pointer-events: none;"></div>`;
     }
 
-    // ==========================================
-    // NEW: GLOBAL ONBOARDING GENERATOR
-    // ==========================================
     function getGlobalInstructions(study) {
         let pages = [];
-
         let target_entity = (study === 'AI') ?
             "<strong>AI-generated digital profiles</strong>" :
             "photos of <strong>other VH participants</strong>";
 
-        // Page 1: High Level Session Goal (Trimmed down!)
         pages.push(`
             <div class="instruction-box" style="text-align:center;">
                 <h2 style="color:#00ffcc;">Session Overview</h2>
@@ -279,7 +268,6 @@
             </div>
         `);
 
-        // Page 2: The Consensus Feedback (Stripped down!)
         pages.push(`
             <div class="instruction-box" style="text-align:center;">
                 <h2 style="color:#00ffcc;">Real-Time Feedback</h2>
@@ -291,7 +279,6 @@
             </div>
         `);
 
-        // Page 3: The Two Golden Rules (User's locked version)
         pages.push(`
             <div class="instruction-box">
                 <h2 style="text-align:center; color:#ffc107;">Two Golden Rules</h2>
@@ -311,12 +298,7 @@
         });
     }
 
-    // PERFECTED MODULE INTROS FOR HUMAN AND AI
-    // ==========================================
-    // REFACTORED: MODULE INTRO "SUPER-CARDS" (Native Design Palette)
-    // ==========================================
     function getModuleIntroPages(study, module_id, seq_num) {
-
         let warning_box = (study === 'Human') ?
             `<div style="background-color: #2a1f04; border-left: 5px solid #ffc107; padding: 14px; margin-top: 35px; border-radius: 4px; text-align: left; font-size: 15px; line-height: 1.4;">
                 <div style="color: #ffc107; font-weight:bold; text-transform:uppercase; letter-spacing:0.5px;">⚠️ Shared Community Bonus</div>
@@ -330,9 +312,7 @@
         let content_html = "";
 
         if (module_id === 'M1') {
-            // Notice these are singular now: "profile" and "photo"
             let t_ent = (study === 'AI') ? "AI profile" : "VH participant photo";
-
             content_html = `
                 <h2 style="font-size: 30px; text-align:center; color:#00ffcc; margin-top: 0;">Section ${seq_num}: Base Evaluation</h2>
                 <p style="font-size: 24px; margin-top: 35px; text-align:center;">In this section, you will evaluate each ${t_ent}.</p>
@@ -342,7 +322,6 @@
             let t_who = (study === 'AI') ? "AI agents" : "VH participants";
             let t_event = (study === 'AI') ? "High-Immersion VH events" : "In-person VH events";
             let t_sub = (study === 'AI') ? "(featuring 3D avatars and real-time voice generation)" : "(we used your ZIP to find locals within 30 minutes)";
-
             content_html = `
                 <div style="text-align: center;">
                     <p style="font-size: 22px; margin-bottom: 15px;">In this module, ${t_who} will join</p>
@@ -356,7 +335,6 @@
             let t_who = (study === 'AI') ? "AI agents" : "VH participants";
             let t_event = (study === 'AI') ? "Text-Based VH events" : "Online VH events";
             let t_sub = (study === 'AI') ? "(chatroom text only; no voice or avatars)" : "(participants living all across the United States)";
-
             content_html = `
                 <div style="text-align: center;">
                     <p style="font-size: 22px; margin-bottom: 15px;">In this module, ${t_who} will attend</p>
@@ -367,7 +345,7 @@
             `;
         }
 
-        return [{
+        let pages = [{
             type: jsPsychHtmlButtonResponse,
             stimulus: `<div class="instruction-box" style="max-width: 780px;">${content_html}<p style="text-align:right; font-size:12px; color:#555555; margin-top: 20px; margin-bottom:0;">[${module_id}]</p></div>`,
             choices: ['Acknowledge & Continue'],
@@ -383,15 +361,69 @@
                 }, 1000);
             }
         }];
-    }
 
-    function getSimplifiedFormula(task_id) {
-        let formula = "";
-        if (task_id === 'T1') formula = "TARGET = feel good/ friendly";
-        else if (task_id === 'T2') formula = "TARGET = feel bad/ threatened";
-        else if (task_id === 'T3' || task_id === 'T5') formula = "TARGET = would like to";
-        else if (task_id === 'T4' || task_id === 'T6') formula = "TARGET = avoid";
-        return `<div style="font-size: 40px; font-weight: bold; text-align: center; margin: 50px 0; color: #ffffff;">${formula}</div>`;
+        // NEW: Inject the willingness slider for the context modules (High Credibility Version)
+        if (module_id === 'M2' || module_id === 'M3') {
+            let context_label = "";
+            let context_desc = "";
+            let target_entity = (study === 'Human') ? "human partners" : "AI agents";
+
+            // Determine exact wording based on Study and Module
+            if (study === 'Human') {
+                if (module_id === 'M2') {
+                    context_label = "an In-Person";
+                    context_desc = "driving to a local venue to meet face-to-face";
+                } else {
+                    context_label = "an Online";
+                    context_desc = "logging into a video call from your home";
+                }
+            } else { // AI Study
+                if (module_id === 'M2') {
+                    context_label = "a High-Immersion";
+                    context_desc = "using 3D avatars and real-time voice synthesis";
+                } else {
+                    context_label = "a Text-Based";
+                    context_desc = "typing in a standard text chatroom";
+                }
+            }
+
+            pages.push({
+                type: jsPsychHtmlSliderResponse,
+                stimulus: `
+                <div class="instruction-box" style="text-align:center; padding-bottom: 40px; max-width: 850px;">
+                    <h2 style="color:#00ffcc; text-transform: uppercase; letter-spacing: 1px;">Matching Algorithm Calibration</h2>
+                    
+                    <p style="font-size: 22px; line-height: 1.5; margin-top: 30px;">
+                        To provide accurate social cohort matching, our algorithm requires your logistical input for the upcoming Vibe Hang sessions. You are about to evaluate potential ${target_entity} specifically for <strong>${context_label}</strong> events.<br>
+                        <span style="color: #aaaaaa; font-size: 18px;">(Format: ${context_desc})</span>
+                    </p>
+
+                    <div style="background-color: #222; border-left: 5px solid #ffc107; padding: 15px; margin: 25px auto; border-radius: 4px; max-width: 80%;">
+                        <p style="font-size: 20px; font-weight: bold; margin: 0;">
+                            Please indicate your actual baseline willingness to attend this event format:
+                        </p>
+                    </div>
+                </div>`,
+                labels: [
+                    '<span style="font-size: 18px; color: #ff5555;">0%<br>Will Not Attend</span>', 
+                    '<span style="font-size: 18px; color: #aaaaaa;">50%<br>Unsure</span>', 
+                    '<span style="font-size: 18px; color: #00ffcc;">100%<br>Definitely Will Attend</span>'
+                ],
+                min: 0,
+                max: 100,
+                start: 50,
+                step: 1,
+                slider_width: 700, 
+                require_movement: true, 
+                data: { 
+                    is_baseline_slider: true, 
+                    module_id: module_id, 
+                    context_type: context_label 
+                }
+            });
+        }
+
+        return pages;
     }
 
     function getTaskTargetText(study, task_id) {
@@ -405,14 +437,54 @@
         return "Please follow the instructions carefully.";
     }
 
+    // ==========================================
+    // NEW: DYNAMIC SPATIAL STIMULUS GENERATOR (GRAYSCALE)
+    // ==========================================
+    function getDynamicTrialStimulus(task_id, stimulus_url, w_mark) {
+        // 1. Determine the target word based on the task
+        let target_word = "";
+        if (task_id === 'T1') target_word = "Friendly";
+        else if (task_id === 'T2') target_word = "Threatened";
+        else if (task_id === 'T3' || task_id === 'T5') target_word = "Interact";
+        else if (task_id === 'T4' || task_id === 'T6') target_word = "Avoid";
+
+        // Define styling: Deep gray for keys to recede, light gray for words to pop
+        let key_style = "color: #666666; font-size: 22px;";
+        let word_style = "color: #dddddd; font-weight: bold; font-size: 28px;";
+
+        // 2. Map the text to Left (F) and Right (J) based on the global key_condition
+        let left_text, right_text;
+
+        if (target_key === 'f') {
+            left_text = `<span style="${key_style}">[F]</span><br><span style="${word_style}">${target_word}</span>`;
+            right_text = `<span style="${key_style}">[J]</span><br><span style="${word_style}">Non-target</span>`;
+        } else {
+            // J is target
+            left_text = `<span style="${key_style}">[F]</span><br><span style="${word_style}">Non-target</span>`;
+            right_text = `<span style="${key_style}">[J]</span><br><span style="${word_style}">${target_word}</span>`;
+        }
+
+        // 3. Build the Flexbox layout (Fixed widths keep the image dead center)
+        return w_mark + `
+        <div class="stimulus-container" style="display: flex; align-items: center; justify-content: center; gap: 30px;">
+            <div style="width: 200px; text-align: right; line-height: 1.3;">
+                ${left_text}
+            </div>
+            
+            <img src="${stimulus_url}" class="stimulus-image" style="box-shadow: 0 0 15px rgba(0,0,0,0.5);">
+            
+            <div style="width: 200px; text-align: left; line-height: 1.3;">
+                ${right_text}
+            </div>
+        </div>`;
+    }
+
     function calculateFeedback(is_target, response_key, filename_intensity) {
         let resp = String(response_key || '').trim().toLowerCase();
         let is_correct = false;
 
-        // --- NEW: DYNAMIC KEY ACCURACY CHECK ---
         if (String(is_target).trim() === '1' && resp === target_key) is_correct = true;
         if (String(is_target).trim() === '0' && resp === nontarget_key) is_correct = true;
-        // ----------------------------------------
 
         let min, max;
         if (is_correct) {
@@ -433,20 +505,9 @@
         `;
     }
 
-    function getProgressBar(percent) {
-        return `
-        <div style="width: 80%; margin: 40px auto; text-align: center; position: relative; z-index: 20;">
-            <div style="width: 100%; background-color: #333; height: 15px; border-radius: 10px; overflow: hidden;">
-                <div style="width: ${percent}%; background-color: #00ffcc; height: 100%; transition: width 0.3s;"></div>
-            </div>
-            <p style="color: #888; font-size: 16px; margin-top: 10px;">Experiment Progress: ${percent}% Complete</p>
-        </div>`;
-    }
-    // Helper function to create a timed rest trial + manual continue
     function getTimedRest(duration, title, subtext) {
-        let actual_duration = test_mode ? 1 : duration; // Fast-forward for test mode
+        let actual_duration = test_mode ? 1 : duration;
 
-        // Screen 1: The forced timer (NO_KEYS allowed)
         let timer_trial = {
             type: jsPsychHtmlKeyboardResponse,
             stimulus: function () {
@@ -484,7 +545,6 @@
             }
         };
 
-        // Screen 2: The manual continue (Waits for SPACE BAR)
         let continue_trial = {
             type: jsPsychHtmlKeyboardResponse,
             stimulus: function () {
@@ -503,13 +563,9 @@
             choices: [' ']
         };
 
-        // Returns them as a sequence
         return { timeline: [timer_trial, continue_trial] };
     }
 
-    /* =========================================================
-       BLOCK 3: FILENAME EXTRACTOR & TIMELINE BUILDER
-       ========================================================= */
     Papa.parse(list_path, {
         download: true,
         header: true,
@@ -615,11 +671,9 @@
 
         csv_data.forEach((row) => {
             let context_css = "";
-            // ENABLED WATERMARKS FOR BOTH HUMAN AND AI CONDITIONS
             if (row.module_id === 'M2') {
                 context_css = "context-inperson";
             } else if (row.module_id === 'M3') {
-                // If it is Study 2 (AI), use the Text file icon. Otherwise, use WiFi.
                 context_css = (study_condition === 'AI') ? "context-text" : "context-online";
             }
 
@@ -682,15 +736,12 @@
                 current_task = row.task_id;
                 current_block = row.block_id;
 
-                // 1. Safe plain-text formula grabber
                 let raw_formula = "";
-
                 if (current_task === 'T1') raw_formula = "TARGET = FEEL GOOD / FRIENDLY";
                 else if (current_task === 'T2') raw_formula = "TARGET = FEEL BAD / THREATENED";
                 else if (current_task === 'T3' || current_task === 'T5') raw_formula = "TARGET = INTERACT";
                 else if (current_task === 'T4' || current_task === 'T6') raw_formula = "TARGET = AVOID";
 
-                // 2. The Master Dashboard (Replaces 4 old screens)
                 let inst_master = {
                     type: jsPsychHtmlButtonResponse,
                     stimulus: `
@@ -723,7 +774,7 @@
                     on_load: function () {
                         let btn = document.querySelector('.jspsych-btn');
                         btn.disabled = true; btn.style.opacity = '0.4';
-                        let c = test_mode ? 1 : 1; // 3 Second lock
+                        let c = test_mode ? 1 : 1;
                         btn.innerText = `Reading lock (${c}s)...`;
                         let intv = setInterval(() => {
                             c--;
@@ -733,7 +784,6 @@
                     }
                 };
 
-                // 3. Quick Check Quiz Generation
                 let q_prompts = [];
                 let correct_answers = [];
 
@@ -785,7 +835,6 @@
                     }
                 };
 
-                // Push Master + Quiz wrapped in the fail-loop
                 timeline.push({
                     timeline: [inst_master, check_screen, feedback_screen],
                     loop_function: function (data) {
@@ -793,15 +842,14 @@
                     }
                 });
 
-                // 4. Tapered Practice Logic (4 trials for Task 1; 2 trials for the rest)
-                let num_practice = test_mode ? 1 : (seq_task === 1 ? 4 : 2);
+                let num_practice = test_mode ? 1 : 4;
 
                 timeline.push({
                     type: jsPsychHtmlKeyboardResponse,
                     stimulus: `
                     <div class="instruction-box" style="text-align:center;">
                         <h2>Practice (${num_practice} trials)</h2>
-                        <p style="color:#00ffcc; font-size: 22px;">Place your fingers on <strong style="color:#fff;">${instr_target}</strong> and <strong style="color:#fff;">${instr_nontarget}</strong></p>
+                        <p style="color:#00ffcc; font-size: 22px;">Place your index fingers on the <strong style="color:#fff;">F</strong> and <strong style="color:#fff;">J</strong> keys.</p>
                         <p style="color:#888; font-size: 18px; margin-top: 40px;">Press SPACE to begin practice</p>
                     </div>`,
                     choices: [' ']
@@ -825,9 +873,13 @@
                     if (pb_file.includes('o')) pb_int = 'neutral';
 
                     timeline.push({ type: jsPsychHtmlKeyboardResponse, stimulus: w_mark + `<div style="font-size: 80px; color:#555; position: relative; z-index: 20;">+</div>`, choices: "NO_KEYS", trial_duration: test_mode ? 200 : 500 });
+
+                    // NEW DYNAMIC PRACTICE TRIAL
                     timeline.push({
                         type: jsPsychHtmlKeyboardResponse,
-                        stimulus: w_mark + `<div class="stimulus-container"><div class="practice-banner">PRACTICE</div><img src="${p_row.stimulus}" class="stimulus-image"></div>`,
+                        stimulus: function () {
+                            return getDynamicTrialStimulus(p_row.task_id, p_row.stimulus, w_mark) + `<div class="practice-banner">PRACTICE</div>`;
+                        },
                         choices: [target_key, nontarget_key], data: { is_practice: true, task_id: p_row.task_id },
                         on_finish: function (data) { data.feedback_html = w_mark + `<div class="stimulus-container"><div class="practice-banner">PRACTICE</div>${calculateFeedback(p_row.is_target || 0, data.response, pb_int)}</div>`; }
                     });
@@ -855,9 +907,12 @@
 
             timeline.push({ type: jsPsychHtmlKeyboardResponse, stimulus: w_mark + `<div style="font-size: 80px; color: #555; position: relative; z-index: 20;">+</div>`, choices: "NO_KEYS", trial_duration: test_mode ? 200 : 500 });
 
+            // NEW DYNAMIC REAL TRIAL
             timeline.push({
                 type: jsPsychHtmlKeyboardResponse,
-                stimulus: w_mark + `<div class="stimulus-container"><img src="${row.stimulus}" class="stimulus-image"></div>`,
+                stimulus: function () {
+                    return getDynamicTrialStimulus(row.task_id, row.stimulus, w_mark);
+                },
                 choices: [target_key, nontarget_key],
                 data: { is_practice: false, task_id: row.task_id, module_id: row.module_id, block_id: row.block_id, is_target: row.is_target, intensity: row.intensity, condition: study_condition },
                 on_finish: function (data) { data.feedback_html = w_mark + `<div class="stimulus-container">${calculateFeedback(data.is_target, data.response, data.intensity, row.stimulus)}</div>`; }
@@ -866,19 +921,14 @@
             timeline.push({ type: jsPsychHtmlKeyboardResponse, stimulus: function () { return jsPsych.data.get().last(1).values()[0].feedback_html; }, choices: "NO_KEYS", trial_duration: test_mode ? 400 : 1500 });
         });
 
-        // --- OFFICIAL DATAPIPE SAVE CONFIGURATION ---
         const save_data = {
             type: jsPsychPipe,
             action: "save",
             experiment_id: "qESL5807tK42",
-            // 1. Names the file dynamically: data_PID_Condition.csv
             filename: `data_${subject_id}_${study_condition}.csv`,
             data_string: () => jsPsych.data.get().csv(),
             on_finish: function () {
-                // 2. Define your SINGLE live Qualtrics Landing Pad
                 const single_landing_pad = "https://albany.az1.qualtrics.com/jfe/form/SV_bITuLX7JjpSA3hc";
-
-                // 3. Redirect and pass BOTH the PROLIFIC_PID and the condition to Qualtrics
                 window.location.href = `${single_landing_pad}?PROLIFIC_PID=${subject_id}&condition=${study_condition}`;
             }
         };
@@ -893,10 +943,9 @@
                 <p style="color:#888;"><em>After this survey, you will receive your Prolific completion code. Redirecting momentarily...</em></p>
             </div>`,
             choices: "NO_KEYS",
-            trial_duration: 4500 // Increased slightly to 4.5 seconds so they have time to read the warning
+            trial_duration: 4500
         };
 
-        // --- PUSH TO TIMELINE ---
         timeline.push(saving_screen);
         timeline.push(save_data);
 
