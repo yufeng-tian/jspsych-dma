@@ -9,6 +9,7 @@
     <script src="https://unpkg.com/@jspsych/plugin-html-button-response@1.1.3"></script>
     <script src="https://unpkg.com/@jspsych/plugin-survey-multi-choice@1.1.3"></script>
     <script src="https://unpkg.com/@jspsych/plugin-html-slider-response@1.1.3"></script>
+    <script src="https://unpkg.com/@jspsych/plugin-survey-text@1.1.3"></script>
     <script src="https://unpkg.com/@jspsych/plugin-preload@1.1.3"></script>
     <script src="https://unpkg.com/@jspsych/plugin-fullscreen@1.1.2"></script>
     <link href="https://unpkg.com/jspsych@7.3.4/css/jspsych.css" rel="stylesheet" type="text/css" />
@@ -230,6 +231,7 @@
 
     const key_condition = (target_key_val === 'f') ? 'F_Target' : 'J_Target';
     let target_key, nontarget_key, instr_target, instr_nontarget;
+    let bonus_task_counter = 1;
 
     if (key_condition === 'F_Target') {
         target_key = 'f'; nontarget_key = 'j';
@@ -371,64 +373,72 @@
             }
         }];
 
-        // NEW: Inject the willingness slider for the context modules (High Credibility Version)
+        // ==========================================
+        // EPISODIC RECALL MANIPULATION & SLIDER
+        // ==========================================
         if (module_id === 'M2' || module_id === 'M3') {
+            let recall_prompt = "";
+            let expect_prompt = "";
+
+            if (study === 'Human' && module_id === 'M2') {
+                recall_prompt = "Recall <strong>one specific, vivid episode</strong> where you connected with, or were rejected by, someone face-to-face in a physical space <em>(e.g., a coffee shop, gym, party, campus, or a friend's place)</em>.<br><br><span style='color:#00ffcc; font-weight:bold;'>➔ What was this physical interaction about? How did you feel? (2-3 sentences)</span>";
+                expect_prompt = "Now, imagine driving to our local venue for the upcoming <strong>In-Person Vibe Hang</strong>.<br><br><span style='color:#00ffcc; font-weight:bold;'>➔ What do you expect will happen during this physical, face-to-face interaction? How do you expect to feel? (2-3 sentences)</span>";
+            }
+            else if (study === 'Human' && module_id === 'M3') {
+                recall_prompt = "Recall <strong>one specific, vivid episode</strong> where you connected with, or were rejected by, someone purely through a screen <em>(e.g., a Discord chat, Zoom meeting, FaceTime, or a game lobby)</em>.<br><br><span style='color:#00ffcc; font-weight:bold;'>➔ What was this digital interaction about? How did you feel? (2-3 sentences)</span>";
+                expect_prompt = "Now, imagine logging into the upcoming <strong>Online Vibe Hang</strong> from your computer.<br><br><span style='color:#00ffcc; font-weight:bold;'>➔ What do you expect will happen during this screen-mediated interaction? How do you expect to feel? (2-3 sentences)</span>";
+            }
+            else if (study === 'AI' && module_id === 'M2') {
+                recall_prompt = "Recall <strong>one specific, vivid episode</strong> where you had an engaging, or frustrating, interaction with a responsive digital entity <em>(e.g., a VR world, an advanced video game character, or a voice assistant like Alexa)</em>.<br><br><span style='color:#00ffcc; font-weight:bold;'>➔ What was this immersive experience about? How did you feel? (2-3 sentences)</span>";
+                expect_prompt = "Now, imagine putting on a headset for the upcoming <strong>High-Immersion Vibe Hang</strong>, speaking in real-time with a 3D AI avatar.<br><br><span style='color:#00ffcc; font-weight:bold;'>➔ What do you expect will happen in this interactive 3D environment? How do you expect to feel? (2-3 sentences)</span>";
+            }
+            else if (study === 'AI' && module_id === 'M3') {
+                recall_prompt = "Recall <strong>one specific, vivid episode</strong> where you had a helpful, or frustrating, interaction typing with a text-based AI <em>(e.g., ChatGPT, an automated customer service bot, or an AI study tool)</em>.<br><br><span style='color:#00ffcc; font-weight:bold;'>➔ What was this text-based interaction about? How did you feel? (2-3 sentences)</span>";
+                expect_prompt = "Now, imagine opening the chatroom for the upcoming <strong>Text-Based Vibe Hang</strong> to exchange messages with an AI agent.<br><br><span style='color:#00ffcc; font-weight:bold;'>➔ What do you expect will happen during this purely text-based interaction? How do you expect to feel? (2-3 sentences)</span>";
+            }
+
+            // Push the Two-Box Task
+            pages.push({
+                type: jsPsychSurveyText,
+                preamble: `
+                <div class="instruction-box" style="text-align:center; max-width: 850px;">
+                    <div style="background-color: #2a1f04; border: 2px solid #ffc107; padding: 10px; border-radius: 8px; display: inline-block; margin-bottom: 10px;">
+                        <h2 style="color:#ffc107; margin: 0; font-size: 24px; text-transform: uppercase;">💰 Guaranteed $1.00 Bonus Task</h2>
+                    </div>
+                </div>`,
+                questions: [
+                    { prompt: `<div style="text-align:left; font-size:18px; margin-bottom:5px;">${recall_prompt}</div>`, rows: 3, columns: 80, required: true, name: `recall_box_${module_id}` },
+                    { prompt: `<div style="text-align:left; font-size:18px; margin-top:15px; margin-bottom:5px;">${expect_prompt}</div>`, rows: 3, columns: 80, required: true, name: `expect_box_${module_id}` }
+                ],
+                data: { is_recall_task: true, module_id: module_id, condition: study }
+            });
+
+            // Push the Shortened Slider
             let context_label = "";
             let context_desc = "";
-            let target_entity = (study === 'Human') ? "human partners" : "AI agents";
-
-            // Determine exact wording based on Study and Module
             if (study === 'Human') {
-                if (module_id === 'M2') {
-                    context_label = "an In-Person";
-                    context_desc = "driving to a local venue to meet face-to-face";
-                } else {
-                    context_label = "an Online";
-                    context_desc = "logging into a video call from your home";
-                }
-            } else { // AI Study
-                if (module_id === 'M2') {
-                    context_label = "a High-Immersion";
-                    context_desc = "using 3D avatars and real-time voice synthesis";
-                } else {
-                    context_label = "a Text-Based";
-                    context_desc = "typing in a standard text chatroom";
-                }
+                if (module_id === 'M2') { context_label = "an In-Person"; context_desc = "driving to a local venue to meet face-to-face"; }
+                else { context_label = "an Online"; context_desc = "logging into a video call from your home"; }
+            } else {
+                if (module_id === 'M2') { context_label = "a High-Immersion"; context_desc = "using 3D avatars and real-time voice synthesis"; }
+                else { context_label = "a Text-Based"; context_desc = "typing in a standard text chatroom"; }
             }
 
             pages.push({
                 type: jsPsychHtmlSliderResponse,
                 stimulus: `
-                <div class="instruction-box" style="text-align:center; padding-bottom: 40px; max-width: 850px;">
-                    <h2 style="color:#00ffcc; text-transform: uppercase; letter-spacing: 1px;">Matching Algorithm Calibration</h2>
-                    
-                    <p style="font-size: 22px; line-height: 1.5; margin-top: 30px;">
-                        To provide accurate social cohort matching, our algorithm requires your logistical input for the upcoming Vibe Hang sessions. You are about to evaluate potential ${target_entity} specifically for <strong>${context_label}</strong> events.<br>
-                        <span style="color: #aaaaaa; font-size: 18px;">(Format: ${context_desc})</span>
-                    </p>
-
-                    <div style="background-color: #222; border-left: 5px solid #ffc107; padding: 15px; margin: 25px auto; border-radius: 4px; max-width: 80%;">
+                <div class="instruction-box" style="text-align:center; padding-bottom: 30px; max-width: 850px;">
+                    <h2 style="color:#00ffcc; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 30px;">Algorithm Calibration</h2>
+                    <div style="background-color: #222; border-left: 5px solid #ffc107; padding: 15px; margin: 15px auto; border-radius: 4px; max-width: 80%;">
                         <p style="font-size: 20px; font-weight: bold; margin: 0;">
-                            Please indicate your actual baseline willingness to attend this event format:
+                            Please indicate your actual baseline willingness to attend <strong>${context_label}</strong> event format:
                         </p>
+                        <p style="color: #aaaaaa; font-size: 16px; margin-top: 5px;">(Format: ${context_desc})</p>
                     </div>
                 </div>`,
-                labels: [
-                    '<span style="font-size: 18px; color: #ff5555;">0%<br>Will Not Attend</span>',
-                    '<span style="font-size: 18px; color: #aaaaaa;">50%<br>Unsure</span>',
-                    '<span style="font-size: 18px; color: #00ffcc;">100%<br>Definitely Will Attend</span>'
-                ],
-                min: 0,
-                max: 100,
-                start: 50,
-                step: 1,
-                slider_width: 700,
-                require_movement: true,
-                data: {
-                    is_baseline_slider: true,
-                    module_id: module_id,
-                    context_type: context_label
-                }
+                labels: ['<span style="font-size: 18px; color: #ff5555;">0%<br>Will Not Attend</span>', '<span style="font-size: 18px; color: #aaaaaa;">50%<br>Unsure</span>', '<span style="font-size: 18px; color: #00ffcc;">100%<br>Definitely Will Attend</span>'],
+                min: 0, max: 100, start: 50, step: 1, slider_width: 700, require_movement: true,
+                data: { is_baseline_slider: true, module_id: module_id, context_type: context_label }
             });
         }
 
