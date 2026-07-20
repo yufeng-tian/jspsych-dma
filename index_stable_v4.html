@@ -502,10 +502,8 @@
         let resp = String(response_key || '').trim().toLowerCase();
         let is_correct = false;
 
-        let target_flag = parseInt(is_target);
-
-        if (target_flag === 1 && resp === target_key) is_correct = true;
-        if (target_flag === 0 && resp === nontarget_key) is_correct = true;
+        if (String(is_target).trim() === '1' && resp === target_key) is_correct = true;
+        if (String(is_target).trim() === '0' && resp === nontarget_key) is_correct = true;
 
         let min, max;
         if (is_correct) {
@@ -520,14 +518,10 @@
 
         let percent = Math.floor(Math.random() * (max - min + 1)) + min;
 
-        return {
-            html: `
-                <div class="feedback-number">${percent}%</div>
-                <div class="feedback-label">of others agree with you</div>
-            `,
-            percent_val: percent,
-            correct_eval: is_correct
-        };
+        return `
+            <div class="feedback-number">${percent}%</div>
+            <div class="feedback-label">of others agree with you</div>
+        `;
     }
 
     function getTimedRest(duration, title, subtext) {
@@ -906,12 +900,7 @@
                             return getDynamicTrialStimulus(p_row.task_id, p_row.stimulus, w_mark) + `<div class="practice-banner">PRACTICE</div>`;
                         },
                         choices: [target_key, nontarget_key], data: { is_practice: true, task_id: p_row.task_id },
-                        on_finish: function (data) {
-                            let feedback_data = calculateFeedback(p_row.is_target || 0, data.response, pb_int);
-                            data.feedback_html = w_mark + `<div class="stimulus-container"><div class="practice-banner">PRACTICE</div>${feedback_data.html}</div>`;
-                            data.is_correct = feedback_data.correct_eval;
-                            data.feedback_rate = feedback_data.percent_val;
-                        }
+                        on_finish: function (data) { data.feedback_html = w_mark + `<div class="stimulus-container"><div class="practice-banner">PRACTICE</div>${calculateFeedback(p_row.is_target || 0, data.response, pb_int)}</div>`; }
                     });
                     timeline.push({ type: jsPsychHtmlKeyboardResponse, stimulus: function () { return jsPsych.data.get().last(1).values()[0].feedback_html; }, choices: "NO_KEYS", trial_duration: test_mode ? 400 : 1500 });
                 });
@@ -945,12 +934,7 @@
                 },
                 choices: [target_key, nontarget_key],
                 data: { is_practice: false, task_id: row.task_id, module_id: row.module_id, block_id: row.block_id, is_target: row.is_target, intensity: row.intensity, condition: study_condition },
-                on_finish: function (data) {
-                    let feedback_data = calculateFeedback(data.is_target, data.response, data.intensity);
-                    data.feedback_html = w_mark + `<div class="stimulus-container">${feedback_data.html}</div>`;
-                    data.is_correct = feedback_data.correct_eval;
-                    data.feedback_rate = feedback_data.percent_val;
-                }
+                on_finish: function (data) { data.feedback_html = w_mark + `<div class="stimulus-container">${calculateFeedback(data.is_target, data.response, data.intensity, row.stimulus)}</div>`; }
             });
 
             timeline.push({ type: jsPsychHtmlKeyboardResponse, stimulus: function () { return jsPsych.data.get().last(1).values()[0].feedback_html; }, choices: "NO_KEYS", trial_duration: test_mode ? 400 : 1500 });
